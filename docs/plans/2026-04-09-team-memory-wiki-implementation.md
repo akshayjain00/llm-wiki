@@ -92,6 +92,94 @@ Playwright is intentionally out of scope for this plan because V1 has no browser
 
 ---
 
+## Field Iteration Learnings
+
+### Iteration 1 — `onboarding-charter`
+
+**Target:** `/Users/akshay.jain/Library/CloudStorage/GoogleDrive-akshay.jain@theporter.in/My Drive/AI/onboarding-charter`
+
+**Observed behavior:**
+- Documentation-heavy folders are valid first ingests because they create a clean snapshot, ref manifest, and project shell.
+- Conservative inference can still miss `owner`, `status`, and `summary` when the folder lacks one canonical README-style entry document.
+- Rich markdown formatting can produce noisy `next_steps` extraction when the source bundle contains multiple planning formats.
+
+**Operator adjustment for future iterations:**
+- Prefer targets with one strong top-level README or CLAUDE-style overview plus 2-4 supporting docs.
+- After every ingest, run `query` and `lint` immediately, then manually curate the card if `owner`, `status`, `summary`, or `next_steps` are weak.
+- Treat the generated card as the durable semantic layer; do not expect raw ingest heuristics alone to produce final-quality project orientation.
+
+**Implementation follow-up to watch:**
+- Summary extraction should prefer explicit overview documents more strongly.
+- `next_steps` extraction needs tighter filtering against formatting and prompt artifacts.
+- The generated `schema/` files are guidance only today; future iterations may benefit from making portions of them executable configuration.
+
+### Iteration 2 — `HCV` / Spot Orders on Tray
+
+**Target:** `/Users/akshay.jain/Library/CloudStorage/GoogleDrive-akshay.jain@theporter.in/My Drive/AI/HCV`
+
+**Observed behavior:**
+- Focused narrative bundles produce cleaner ingests than broad mixed documentation folders.
+- The default slug followed the folder name (`hcv`), while the actual semantic project identity came from the strongest document title (`Spot Orders on Tray`).
+- A post-curation `rebuild-indexes` is essential whenever project identity is normalized after ingest.
+
+**Operator adjustment for future iterations:**
+- Prefer narrow folders whose files all describe the same operational surface or system.
+- Expect to manually normalize project identity when folder names are business buckets but document titles describe the real project.
+- Do not inspect indexes immediately after rebuilding in parallel with other commands; refresh first, then inspect.
+
+**Implementation follow-up to watch:**
+- Add optional alias support or a canonical-name override so folder-name slugs and semantic project names do not diverge awkwardly.
+- Consider a stronger title-selection heuristic that prefers cross-referenced overview docs over the first matching markdown file.
+
+### Iteration 3 — `ViDATA`
+
+**Target:** `/Users/akshay.jain/Library/CloudStorage/GoogleDrive-akshay.jain@theporter.in/My Drive/AI/ViDATA`
+
+**Observed behavior:**
+- Strong README and architecture docs dramatically improve first-pass summary quality, even for app/repo-style targets.
+- The ingest handled secret-bearing local files appropriately because the current source filters blocked `.env` and `.p8` material.
+- Remaining cleanup centered on semantic normalization: canonical project name, owner, status, and alias drift.
+
+**Operator adjustment for future iterations:**
+- Prioritize targets with a strong top-level `README.md` or `CLAUDE.md` when choosing between otherwise similar folders.
+- Repo-style slices are viable as long as they have clear human-facing docs and the ingest filters exclude secrets and caches.
+- Normalize historical names or aliases in the card whenever the docs use more than one identity for the same service.
+
+**Implementation follow-up to watch:**
+- Add first-class alias support in the card schema or indexes.
+- Consider surfacing detected secret exclusions and repo-root status in the project card so operators can audit ingest trust more easily.
+
+### Iteration 4 — `mbr_brain`
+
+**Target:** `/Users/akshay.jain/Documents/mbr_brain`
+
+**Observed behavior:**
+- Broad multi-business system repos are the hardest current target type for V1 heuristics.
+- Without a canonical overview preference, the ingest can misidentify a support file (`CLAUDE.md`) as the project name and carry over irrelevant `next_steps`.
+- Strong onboarding/architecture docs still make the slice recoverable through manual curation.
+
+**Operator adjustment for future iterations:**
+- For broad systems, expect a mandatory manual identity pass after ingest.
+- Prefer ingesting narrower sub-slices when the repo spans multiple businesses or operational domains.
+- When broad repos must be ingested, anchor curation on onboarding/architecture docs rather than whichever file the heuristics pick first.
+
+**Implementation follow-up to watch:**
+- Add explicit overview-document priority (`README`, `docs/onboarding`, architecture docs) before fallback titles.
+- Add better filtering so guidance files such as `CLAUDE.md` do not dominate title or next-step extraction.
+
+### Cross-Iteration Pattern
+
+After four iterations, the target-quality ordering is clear:
+
+1. focused narrative bundle
+2. repo with strong README/architecture docs
+3. broad documentation collection
+4. broad multi-domain repo
+
+Future sessions should select targets in that order whenever possible.
+
+---
+
 ## File Structure
 
 **Create:**
