@@ -1,0 +1,7 @@
+.worktrees/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+build/
+dist/
