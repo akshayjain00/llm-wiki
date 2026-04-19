@@ -6,6 +6,7 @@ from pathlib import Path
 from llm_wiki.ingest import run_ingest
 from llm_wiki.init_workspace import initialize_workspace
 from llm_wiki.indexes import write_indexes
+from llm_wiki.lint import run_lint, write_lint_outputs
 from llm_wiki.query import answer_project_orientation
 
 
@@ -45,6 +46,12 @@ def main() -> int:
         return 0
     if args.command == "query":
         print(answer_project_orientation(args.workspace / "wiki", args.project), end="")
+        return 0
+    if args.command == "lint":
+        findings = run_lint(args.workspace / "wiki")
+        write_lint_outputs(args.workspace, findings)
+        if findings:
+            print("\n".join(findings))
         return 0
     raise NotImplementedError(f"{args.command} is not implemented yet")
 
