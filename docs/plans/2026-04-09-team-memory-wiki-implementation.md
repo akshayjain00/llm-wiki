@@ -204,6 +204,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("init")
     subparsers.add_parser("ingest")
+    subparsers.add_parser("query")
     subparsers.add_parser("rebuild-indexes")
     subparsers.add_parser("lint")
     return parser
@@ -956,6 +957,7 @@ Add a README usage section that assumes the commands work and references:
 
 - `uv run llm-wiki init`
 - `uv run llm-wiki ingest`
+- `uv run llm-wiki query`
 - `uv run llm-wiki rebuild-indexes`
 - `uv run llm-wiki lint`
 
@@ -994,11 +996,36 @@ Expected: emits findings only when data is incomplete and updates `needs-review.
 Run: `uv run llm-wiki --help`
 Expected: prints usage and exits with code `0`
 
-- [ ] **Step 3: Update docs to reflect the verified command flow**
+- [ ] **Step 3: Run final manual verification checklist**
+
+Run these checks as applicable to the implemented surface:
+
+- run linting and type checks
+- run the full automated test suite
+- run the real CLI commands in a `/tmp` smoke workspace and verify outputs against the spec
+- manually inspect generated markdown, frontmatter, manifests, and logs for correctness
+- if Docker support exists by the end of implementation:
+  - build and run the Docker image locally
+  - rerun the smoke flow inside or against that environment
+- if database migrations are introduced:
+  - run migrations in development
+  - verify the resulting schema and rollback expectations
+- if HTTP APIs are introduced:
+  - verify them with CLI or scripted requests
+  - inspect payload shape against the spec
+- if a frontend or browser-accessible review surface is introduced:
+  - deploy/run it locally
+  - use Playwright MCP to test end-to-end flows
+  - fix console warnings or errors before calling the work complete
+- perform manual development-environment scenarios wherever possible rather than relying only on unit tests
+
+Record which of these checks were applicable and which were not in `README.md` or the final execution notes.
+
+- [ ] **Step 4: Update docs to reflect the verified command flow**
 
 Document the verified commands and output locations in `README.md`.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add README.md docs/specs/2026-04-09-team-memory-wiki-design.md

@@ -1065,6 +1065,7 @@ V1 implementation should therefore prefer:
   - `llm-wiki --help`
   - `llm-wiki init`
   - `llm-wiki ingest`
+  - `llm-wiki query`
   - `llm-wiki rebuild-indexes`
   - `llm-wiki lint`
 
@@ -1124,9 +1125,10 @@ At minimum, the end-to-end verification flow must prove:
    - a project card
    - rebuilt indexes
    - an append-only ingest log entry
-3. lint produces stable findings and writes the expected review surfaces
-4. rerunning ingest does not mutate prior snapshots and only changes the latest derived state plus append-only logs
-5. successful CLI commands exit cleanly with code `0`
+3. query returns a wiki-first project-orientation answer from maintained state
+4. lint produces stable findings and writes the expected review surfaces
+5. rerunning ingest does not mutate prior snapshots and only changes the latest derived state plus append-only logs
+6. successful CLI commands exit cleanly with code `0`
 
 ### Static and Contract Verification
 
