@@ -1,5 +1,6 @@
 # Team Memory Wiki Design Spec
 **Date:** 2026-04-09
+**Last Updated:** 2026-04-20
 **Author:** Codex with Akshay Jain
 **Status:** Draft - pending user review
 
@@ -71,6 +72,7 @@ This design must stay faithful to the core concepts in Karpathy's LLM Wiki gist:
 - Create and maintain one `project-card.md` per project.
 - Generate shared indexes for project navigation.
 - Support guided ingest for one target folder/project at a time.
+- Support a project-orientation query surface that answers from the maintained wiki and latest snapshot evidence.
 - Record ingest actions in a chronological log.
 - Support lint checks for stale, missing, or contradictory project orientation data.
 
@@ -82,6 +84,31 @@ This design must stay faithful to the core concepts in Karpathy's LLM Wiki gist:
 - Fully automated decision extraction from every artifact
 - Org-wide collaboration workflows or review UIs
 - Replacing source systems such as Git, Drive, or Notion
+
+These items may still be designed explicitly in this spec as next-phase architecture. Designing them now does not make them implementation requirements for the current V1 plan.
+
+---
+
+## V1 / Next-Phase Boundary
+
+This spec now has two distinct layers of detail:
+
+- **V1 implementation contract**
+  - the parts that must exist for the current implementation plan to be considered complete
+- **Next-phase architecture**
+  - the parts that are intentionally designed now so the system can evolve without a redesign later
+
+The boundary is strict:
+
+- the current implementation plan remains V1-only
+- V1 commands remain:
+  - initialize the workspace
+  - run guided ingest for one target
+  - query project orientation from wiki-first state
+  - rebuild indexes
+  - run lint
+- next-phase features must not become hidden blockers for V1 delivery
+- any future graph, search, automation, or collaboration layer must still honor the existing query-boundary rule and snapshot-first trust model
 
 ---
 
@@ -171,6 +198,33 @@ Notes:
 - `overview.md` and `decisions.md` may be absent initially.
 - `Documents` must use a project allowlist in V1. It is too broad to sweep indiscriminately.
 
+### Optional Next-Phase Storage Extensions
+
+These paths are not required for V1, but they define where next-phase artifacts should live so future design stays coherent:
+
+```text
+wiki/
+├── entities/
+│   └── <entity-type>/<entity-slug>.md
+├── episodes/
+│   └── <project-slug>/<episode-id>.md
+├── procedures/
+│   └── <procedure-slug>.md
+├── crystallized/
+│   └── <project-slug>/<YYYY-MM-DD>-<topic>.md
+└── graph/
+    ├── entities.yaml
+    └── relationships.yaml
+```
+
+Rules:
+
+- `wiki/entities/` stores typed entity pages for people, projects, decisions, systems, libraries, files, and concepts
+- `wiki/episodes/` stores session or ingest-level digests promoted above raw snapshots but below stable semantic facts
+- `wiki/procedures/` stores reusable workflows proven across multiple episodes or projects
+- `wiki/crystallized/` stores durable research, debugging, or analysis digests filed back into memory
+- `wiki/graph/` stores lightweight typed relationship indexes derived from wiki and snapshots, not from live repos
+
 ---
 
 ## Tech Stack and Component Model
@@ -182,6 +236,9 @@ Notes:
 - YAML for ref manifests and ingest-rule configuration
 - Standard library plus a small CLI layer for deterministic file operations
 - Pytest for unit, fixture, integration, and golden-file tests
+- Ruff for linting and format checks
+- Mypy for static analysis over `src/`
+- `uv` for reproducible local execution and packaging smoke checks
 
 ### Core Components
 
@@ -484,6 +541,384 @@ Any ingest that leaves `owner` or `status` as `unknown`, or surfaces conflicting
 
 ---
 
+## Next-Phase Knowledge Lifecycle Model
+
+These rules are not part of the V1 implementation contract, but they are the canonical direction for evolution after project orientation is stable.
+
+### Confidence vs Quality
+
+The system must keep these concepts separate:
+
+- **confidence**
+  - how well-supported and current a claim is
+- **quality**
+  - how readable, structured, cited, and internally consistent a generated artifact is
+
+Confidence answers "is this likely true?" Quality answers "is this memory artifact good enough to keep?"
+
+### Claim Metadata
+
+For next-phase semantic claims, decision records, and entity relationship assertions, the canonical metadata model should include:
+
+```yaml
+claim_id: "<stable id>"
+scope: private|shared
+confidence: 0.00-1.00
+confidence_band: low|medium|high
+evidence_count: <integer>
+last_confirmed: "<ISO-8601 timestamp>"
+freshness_class: hot|warm|cold|stale
+retention_class: transient|working|reference|durable
+supersedes:
+  - "<claim_id>"
+superseded_by:
+  - "<claim_id>"
+quality_score: 0.00-1.00
+quality_band: low|medium|high
+```
+
+### Supersession Rules
+
+When a newer claim contradicts or updates an older claim:
+
+- preserve the older claim
+- mark the older claim as superseded, not deleted
+- link old and new claims through `supersedes` / `superseded_by`
+- prefer the newer claim in query ranking only if:
+  - it has equal or better source authority
+  - and it is more recent or better supported
+- if neither claim clearly dominates, keep both active and route to lint or human review
+
+Supersession applies most strongly to:
+
+- project status
+- ownership changes
+- architecture choices
+- dependency usage claims
+- decisions and reversals
+
+### Retention Rules
+
+Retention is a ranking and visibility rule, not automatic deletion.
+
+- `transient`
+  - short-lived observations and one-off debugging details
+- `working`
+  - recent but not yet stabilized observations
+- `reference`
+  - useful factual knowledge that should stay visible
+- `durable`
+  - long-term decisions, architectural facts, and reusable procedures
+
+Default retention behavior:
+
+- transient knowledge decays fastest
+- working knowledge decays unless reinforced or promoted
+- reference knowledge decays slowly
+- durable knowledge decays slowest and is usually reviewed rather than hidden
+
+Decay signals:
+
+- time since last confirmation
+- time since last access
+- contradiction by newer evidence
+- lack of reinforcement across later ingests
+
+### Formal Memory Tiers
+
+The next-phase memory model should follow four tiers:
+
+1. **Working memory**
+   - recent observations from guided ingest or session activity
+   - default storage:
+     - `logs/ingest-log.md`
+     - temporary extraction outputs
+2. **Episodic memory**
+   - session or ingest digests describing what happened and what was learned
+   - default storage:
+     - `wiki/episodes/`
+     - `wiki/crystallized/`
+3. **Semantic memory**
+   - stabilized cross-session facts and decisions
+   - default storage:
+     - `project-card.md`
+     - `decisions.md`
+     - `wiki/entities/`
+4. **Procedural memory**
+   - reusable workflows, playbooks, and recurring patterns
+   - default storage:
+     - `wiki/procedures/`
+
+### Promotion Rules
+
+- working -> episodic
+  - after successful ingest or session-end summarization
+- episodic -> semantic
+  - when supported by at least two reinforcing signals
+  - or explicitly confirmed by a human
+- semantic -> procedural
+  - when a pattern recurs across multiple episodes or projects
+  - or is intentionally curated as a team workflow
+
+If promotion criteria are not met, keep the item in the lower tier.
+
+---
+
+## Next-Phase Structured Knowledge Model
+
+The wiki should remain readable as markdown pages, but next-phase search and discovery should use typed entities and typed relationships layered on top of those pages.
+
+### Entity Types
+
+The first typed entity set should include:
+
+- `project`
+- `person`
+- `decision`
+- `system`
+- `library`
+- `service`
+- `file`
+- `document`
+- `concept`
+
+### Relationship Types
+
+The first relationship vocabulary should include:
+
+- `owns`
+- `maintains`
+- `uses`
+- `depends_on`
+- `references`
+- `documents`
+- `blocked_by`
+- `supersedes`
+- `contradicts`
+- `caused`
+- `resolved_by`
+- `related_to`
+
+### Storage Model
+
+- entity detail remains readable in markdown under `wiki/entities/`
+- relationship indexes are stored in `wiki/graph/relationships.yaml`
+- entity summaries may be derived from `project-card.md`, `decisions.md`, `overview.md`, and crystallized digests
+- graph indexes are derived artifacts and can be rebuilt from wiki pages plus snapshots
+
+### Query Discipline
+
+Typed entities and relationships must never bypass the snapshot-first trust boundary.
+
+- graph indexes may only be built from:
+  - wiki pages
+  - ref manifests
+  - ingested snapshots
+- graph indexes must not read live repos directly except during explicit refresh or ingest
+
+---
+
+## Next-Phase Search Architecture
+
+### Scale Thresholds
+
+- up to roughly `100` maintained pages
+  - `index.md` plus direct page reads remain sufficient
+- roughly `100-300` maintained pages
+  - add local lexical search over wiki pages and snapshots
+- beyond roughly `300` maintained pages or dense cross-project questions
+  - add hybrid retrieval and typed graph traversal
+
+These thresholds are heuristics, not hard limits.
+
+### Search Streams
+
+The future retrieval stack should combine:
+
+- lexical search
+  - BM25 or equivalent keyword ranking over wiki pages, entity pages, and selected snapshot text
+- semantic search
+  - embedding-backed similarity over project pages, decision pages, and crystallized artifacts
+- graph traversal
+  - expansion over typed entity and relationship indexes
+
+### Result Fusion
+
+The default fusion strategy should be reciprocal rank fusion or equivalent weighted reranking across:
+
+- lexical matches
+- semantic matches
+- graph expansion candidates
+
+### Query Retrieval Order
+
+For next-phase queries, the retrieval order should be:
+
+1. direct wiki navigation hints
+   - `index.md`
+   - `project-card.md`
+   - `decisions.md`
+2. lexical and semantic candidates from the maintained wiki
+3. graph expansion over related entities and decisions
+4. raw snapshot verification if confidence is still low
+5. live-source verification only on explicit refresh or explicit request
+
+This preserves the V1 trust model while scaling retrieval.
+
+---
+
+## Next-Phase Event-Driven Automation
+
+Background automation remains out of scope for V1, but the canonical trigger design should be:
+
+### Trigger Types
+
+- **on new source**
+  - queue ingest for the affected project slice
+- **on ingest completion**
+  - rebuild affected indexes
+  - refresh entity and relationship indexes
+- **on query completion**
+  - evaluate whether the result deserves write-back
+- **on session end**
+  - crystallize valuable exploration into episodic memory
+- **on memory write**
+  - run contradiction and supersession checks
+- **on schedule**
+  - run lint
+  - apply retention decay
+  - surface review queues
+
+### Human Review Gates
+
+Automation may propose changes automatically, but human review is required when:
+
+- confidence is below the configured threshold
+- quality is below the configured threshold
+- the write changes owner or status
+- the write supersedes an existing durable claim
+- the write promotes a private memory into shared scope
+- contradiction resolution is ambiguous
+
+### V1 Compatibility Rule
+
+The current implementation should expose these triggers as future design only. V1 remains manual and guided.
+
+---
+
+## Next-Phase Content Quality and Self-Correction
+
+### Quality Scoring
+
+Every next-phase generated artifact should receive a quality score based on:
+
+- structure
+- citation or source traceability
+- consistency with existing wiki state
+- specificity and usefulness
+- absence of unresolved ambiguity where certainty is claimed
+
+Suggested quality bands:
+
+- `high`
+  - durable, well-cited, safe to keep
+- `medium`
+  - usable but should remain editable and reviewable
+- `low`
+  - do not promote automatically; route to review or rewrite
+
+### Self-Correction Rules
+
+Lint and maintenance flows should eventually support safe auto-fixes for:
+
+- broken links
+- missing reverse links
+- stale claim markers
+- duplicate entity aliases
+- index drift
+
+Auto-fixes must not silently change:
+
+- owner
+- status
+- decision rationale
+- claim supersession state
+
+Those remain review-gated.
+
+---
+
+## Next-Phase Crystallization
+
+Crystallization is the process of turning a completed exploration thread into durable memory.
+
+### Valid Inputs
+
+- debugging sessions
+- research threads
+- design explorations
+- implementation retrospectives
+- project briefings
+
+### Output Destinations
+
+- `project-card.md`
+  - when orientation fields change
+- `decisions.md`
+  - when the artifact records a decision, rationale, or reversal
+- `wiki/crystallized/<project-slug>/<date>-<topic>.md`
+  - when the artifact is a durable digest of a thread or investigation
+- `wiki/procedures/<procedure-slug>.md`
+  - when the artifact captures a reusable workflow
+
+### Routing Rule
+
+One crystallized output may update more than one destination:
+
+- summary into `project-card.md`
+- decision into `decisions.md`
+- full digest into `wiki/crystallized/`
+
+The digest page is the durable narrative. The project card and decisions page hold the concise canonical state.
+
+---
+
+## Next-Phase Shared / Private Scoping
+
+The current workspace is effectively single-user, but the design should support scoped memory from the start.
+
+### Scope Types
+
+- `private`
+  - personal notes, preferences, tentative interpretations, or sensitive context not ready for team memory
+- `shared`
+  - project architecture, team decisions, runbooks, and broadly reusable context
+
+### Default Rules
+
+- raw snapshots inherit the sensitivity of their source
+- project orientation facts default to shared if they are source-grounded and non-sensitive
+- exploratory interpretations default to private until promoted
+
+### Promotion Rules
+
+Private -> shared promotion requires:
+
+- passing privacy filters
+- sufficient confidence
+- sufficient quality
+- no unresolved contradiction with existing shared knowledge
+
+### Conflict Rule
+
+If a private claim contradicts shared memory:
+
+- do not overwrite shared memory automatically
+- preserve the private claim as a private observation
+- surface the contradiction for review
+
+---
+
 ## Query Behavior
 
 Project-orientation answers should start from the maintained wiki.
@@ -516,6 +951,8 @@ If a generated answer is high value and durable, it should be stored as:
 - `decisions.md` when the answer captures a decision, rationale, alternatives, or changed direction
 
 This keeps the wiki compounding over time.
+
+For next-phase crystallization, these V1 write-back destinations remain canonical summaries, while full digests may additionally be written to `wiki/crystallized/` or `wiki/procedures/`.
 
 ---
 
@@ -586,6 +1023,19 @@ The system should fail soft and surface uncertainty.
 
 The first implementation should be test-first and mostly deterministic.
 
+### Deterministic Design Requirements
+
+Verification must be supported by the architecture, not bolted on afterward.
+
+V1 implementation should therefore prefer:
+
+- injectable clocks or timestamp providers for snapshot and log generation
+- stable ordering for all file scans, index rows, and manifest entries
+- deterministic markdown rendering
+- pure functions at the inference and formatting boundaries where possible
+- subprocess-invocable CLI commands so end-to-end tests exercise the real entrypoints
+- explicit exit codes and quiet stderr behavior for successful CLI flows
+
 ### Unit Tests
 
 - file filtering
@@ -611,6 +1061,12 @@ The first implementation should be test-first and mostly deterministic.
 
 - guided ingest against a small synthetic workspace
 - rerun ingest and verify idempotent behavior except expected log growth
+- subprocess-based CLI smoke tests for:
+  - `llm-wiki --help`
+  - `llm-wiki init`
+  - `llm-wiki ingest`
+  - `llm-wiki rebuild-indexes`
+  - `llm-wiki lint`
 
 ### Lint Tests
 
@@ -627,6 +1083,68 @@ Success criteria:
 - indexes remain coherent
 - logs are trustworthy
 
+### Fixture Matrix
+
+The verification suite should cover at least these fixture classes:
+
+- a clean single-project fixture
+- a fixture with conflicting owner or status signals
+- a fixture with noisy or excluded files such as `.env`, `.git`, caches, and binaries
+- a fixture with duplicate files across source roots
+- a fixture with partial evidence that should resolve to `unknown`
+- a fixture whose rerun ingest proves snapshot growth plus stable wiki behavior
+
+---
+
+## Verification Strategy
+
+Verification is a core part of the design, not a final cleanup step.
+
+### Quality Gates
+
+The V1 implementation should not be considered complete unless all of the following pass:
+
+- unit tests
+- integration tests
+- golden-file tests
+- subprocess CLI end-to-end tests
+- Ruff lint check
+- Ruff format check
+- Mypy over `src/`
+- packaging smoke check through `uv build` or equivalent
+
+### End-to-End Verification Contract
+
+At minimum, the end-to-end verification flow must prove:
+
+1. a new workspace can be initialized from the real CLI
+2. guided ingest against a fixture creates:
+   - an immutable snapshot
+   - a ref manifest
+   - a project card
+   - rebuilt indexes
+   - an append-only ingest log entry
+3. lint produces stable findings and writes the expected review surfaces
+4. rerunning ingest does not mutate prior snapshots and only changes the latest derived state plus append-only logs
+5. successful CLI commands exit cleanly with code `0`
+
+### Static and Contract Verification
+
+Verification should also include:
+
+- frontmatter contract checks for `project-card.md`
+- manifest schema checks for `refs/<project-slug>.yaml`
+- markdown contract checks for `index.md`, `needs-review.md`, `ingest-log.md`, and `lint-log.md`
+- static analysis ensuring typed internal models match emitted data structures
+
+### Operational Verification
+
+The implementation should support a local smoke workspace under `/tmp` so the full init -> ingest -> rebuild-indexes -> lint path can be run outside tests as an operator check.
+
+### Browser / Frontend Verification
+
+Playwright or browser automation is **not** part of V1 verification because V1 has no frontend or browser workflow. If a future UI, review console, or search interface is introduced, browser automation and console-cleanliness checks should become mandatory for that surface.
+
 ---
 
 ## V1 Implementation Shape
@@ -635,6 +1153,7 @@ The first implementation should focus on a small, clean command surface:
 
 - initialize the workspace
 - run guided ingest for one target
+- query project orientation
 - rebuild indexes
 - run lint
 
@@ -673,12 +1192,34 @@ Add `decisions.md` or a structured decision section per project capturing:
 - supporting evidence
 - what changed
 
-### Phase 3: Higher-Order Synthesis
+Also add:
+
+- explicit supersession between changed decisions
+- retention classes for transient vs durable knowledge
+- episodic and semantic memory separation
+
+### Phase 3: Structured Knowledge and Search
+
+- typed entities and typed relationships
+- entity pages and relationship indexes
+- lexical plus semantic plus graph-aware retrieval
+- graph-backed impact and dependency questions
+
+### Phase 4: Automation and Crystallization
+
+- event-triggered indexing and maintenance
+- query-time write-back evaluation
+- session-end crystallization
+- quality scoring and safe self-correction
+
+### Phase 5: Higher-Order Synthesis and Collaboration
 
 - domain brief pages
 - cross-project rollups
 - onboarding summaries
 - review packs for management or planning
+- shared/private promotion rules
+- optional multi-agent coordination
 
 ---
 
@@ -716,6 +1257,8 @@ These patterns support the same core outcome: a trustworthy project memory layer
   - repository-root `CLAUDE.md` used as a durable project instruction layer
 - Simon Willison's TIL practice:
   - accumulate small file-backed notes, then build search and browse over them
+- Rohit Ghumare's LLM Wiki v2:
+  - memory lifecycle, typed graph structure, automation, crystallization, and scoped memory as scaling layers on top of the Karpathy pattern
 
 These are not identical products, but together they validate the core operating model:
 
@@ -743,6 +1286,7 @@ The highest-return operating habits will be:
 - file valuable briefings back into the wiki
 - run lint periodically to expose stale or missing metadata
 - add decision memory only after project orientation is stable
+- treat graph/search/automation as explicit next-phase upgrades, not reasons to overcomplicate V1
 
 ---
 
@@ -759,6 +1303,7 @@ The spec is implementation-ready only if V1 can satisfy all of the following:
 - write an append-only ingest log entry
 - run lint and surface at least unknown/conflicting owner or status cases
 - answer a project-orientation query using wiki-first logic without silently consulting live repo state
+- pass the defined verification gates for tests, static analysis, CLI end-to-end checks, and packaging smoke
 
 ---
 
@@ -770,6 +1315,7 @@ These assumptions are explicit and should remain visible during implementation:
 - Repo references remain authoritative; the wiki does not replace Git history or source systems.
 - Weak evidence resolves to `unknown`, not a guess.
 - V1 is optimized for trust and inspectability over full automation.
+- Next-phase graph, search, lifecycle, and automation rules are designed now but are not required to ship the current V1 implementation.
 
 ---
 
@@ -777,6 +1323,9 @@ These assumptions are explicit and should remain visible during implementation:
 
 - Karpathy LLM Wiki gist:
   - [LLM Wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
+- Rohit Ghumare LLM Wiki v2 gist:
+  - [LLM Wiki v2 gist](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2)
+  - [agentmemory](https://github.com/rohitg00/agentmemory)
 - OpenAI Help:
   - [Projects in ChatGPT](https://help.openai.com/en/articles/10169521-projects-in-chatgpt)
 - Anthropic Docs:
