@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llm-wiki"
+version = "0.1.0"
+description = "CLI-first team memory wiki bootstrap."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["PyYAML>=6.0"]
+
+[project.scripts]
+llm-wiki = "llm_wiki.cli:main"
+
+[dependency-groups]
+dev = [
+  "build>=1.2.0",
+  "mypy>=1.11.0",
+  "pytest>=8.0",
+  "ruff>=0.11.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llm_wiki"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[tool.ruff]
+line-length = 100
