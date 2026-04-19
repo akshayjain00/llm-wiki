@@ -3,6 +3,13 @@
 CLI-first implementation of the Team Memory Wiki spec for guided ingest,
 wiki-backed project orientation queries, index rebuilding, and lint checks.
 
+## Read This First
+
+- [Getting Started](docs/guides/getting-started.md)
+- [How It Works](docs/guides/how-it-works.md)
+- [Cookbook](docs/guides/cookbook.md)
+- [V1 Release Notes](docs/releases/v0.1.0.md)
+
 ## Requirements
 
 - Python `>=3.12`
@@ -43,6 +50,18 @@ Run lint and refresh review surfaces:
 ```bash
 uv run llm-wiki lint --workspace /tmp/team-memory-wiki-smoke
 ```
+
+## Effective Usage Pattern
+
+Use the service in this order:
+
+1. `init` once per workspace
+2. `ingest` one project slice at a time
+3. `query` the resulting slug immediately
+4. `lint` to see whether the maintained state is trustworthy enough
+5. `rebuild-indexes` only when you want to refresh shared navigation pages after card edits
+
+This is a local CLI and markdown workspace, not an API service or background daemon.
 
 ## Verified Outputs
 
