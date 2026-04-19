@@ -23,6 +23,9 @@ def test_render_project_card_contains_required_frontmatter_and_sections() -> Non
     assert 'slug: "demo-project"' in markdown
     assert 'owner: "Data Team"' in markdown
     assert "status: active" in markdown
+    assert "## Slug" in markdown
     assert "## Summary" in markdown
+    assert "## Owner Confidence" in markdown
+    assert "## Status Confidence" in markdown
     assert "## Next Steps" in markdown
     assert "- ship guided ingest" in markdown

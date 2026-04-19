@@ -16,14 +16,13 @@ STATUS_PRIORITY = {
 
 
 def sort_index_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
-    grouped_rows = sorted(rows, key=_sort_key)
-    active_rows = sorted(
-        [row for row in grouped_rows if row.get("status", "unknown") == "active"],
-        key=lambda row: row.get("updated", ""),
-        reverse=True,
+    ordered_by_recency = sorted(rows, key=lambda row: row.get("updated", ""), reverse=True)
+    return sorted(
+        ordered_by_recency,
+        key=lambda row: STATUS_PRIORITY.get(
+            row.get("status", "unknown"), STATUS_PRIORITY["unknown"]
+        ),
     )
-    non_active_rows = [row for row in grouped_rows if row.get("status", "unknown") != "active"]
-    return active_rows + non_active_rows
 
 
 def _sort_key(row: dict[str, str]) -> tuple[int, str]:
@@ -59,6 +58,7 @@ def build_index_rows(projects_root: Path) -> list[dict[str, str]]:
                 "path": str(card_path.relative_to(projects_root.parent.parent)),
                 "summary": card.summary,
                 "owner": card.owner,
+                "domain": card.domain,
                 "status": card.status,
                 "updated": card.last_ingested.split("T", 1)[0]
                 if card.last_ingested != "unknown"
@@ -81,9 +81,20 @@ def write_indexes(workspace_root: Path) -> None:
     (indexes_root / "by-owner.md").write_text(
         render_index_markdown(sorted(rows, key=lambda row: row["owner"]))
     )
-    (indexes_root / "by-domain.md").write_text(
-        "# Projects By Domain\n\nDomain grouping not implemented yet.\n"
-    )
+    by_domain_lines = ["# Projects By Domain", ""]
+    grouped_domains = sorted({row["domain"] for row in rows}) if rows else []
+    for domain in grouped_domains:
+        by_domain_lines.extend(
+            [
+                f"## {domain}",
+                "",
+                render_index_markdown([row for row in rows if row["domain"] == domain]).strip(),
+                "",
+            ]
+        )
+    if not grouped_domains:
+        by_domain_lines.append("No projects indexed.")
+    (indexes_root / "by-domain.md").write_text("\n".join(by_domain_lines).rstrip() + "\n")
     needs_review_rows = [
         row for row in rows if row["owner"] == "unknown" or row["status"] == "unknown"
     ]
