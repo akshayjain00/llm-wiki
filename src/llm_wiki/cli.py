@@ -3,7 +3,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from llm_wiki.ingest import run_ingest
 from llm_wiki.init_workspace import initialize_workspace
+from llm_wiki.indexes import write_indexes
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,6 +35,12 @@ def main() -> int:
     args = build_parser().parse_args()
     if args.command == "init":
         initialize_workspace(args.workspace)
+        return 0
+    if args.command == "ingest":
+        run_ingest(args.workspace, args.target)
+        return 0
+    if args.command == "rebuild-indexes":
+        write_indexes(args.workspace)
         return 0
     raise NotImplementedError(f"{args.command} is not implemented yet")
 

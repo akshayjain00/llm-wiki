@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 from llm_wiki.models import ProjectCardData
 
 
@@ -140,3 +142,52 @@ def append_log_entry(destination: Path, entry: str) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     existing = destination.read_text() if destination.exists() else "# Ingest Log\n\n"
     destination.write_text(existing + entry)
+
+
+def load_project_card(card_path: Path) -> ProjectCardData:
+    text = card_path.read_text()
+    if not text.startswith("---\n"):
+        raise ValueError(f"Project card {card_path} is missing frontmatter")
+
+    _, remainder = text.split("---\n", 1)
+    frontmatter_text, body = remainder.split("\n---\n", 1)
+    frontmatter = yaml.safe_load(frontmatter_text) or {}
+
+    return ProjectCardData(
+        project_name=frontmatter.get("project_name", card_path.parent.name),
+        slug=frontmatter.get("slug", card_path.parent.name),
+        domain=frontmatter.get("domain", "unknown"),
+        source_roots=list(frontmatter.get("source_roots", [])),
+        live_refs=list(frontmatter.get("live_refs", [])),
+        owner=frontmatter.get("owner", "unknown"),
+        owner_confidence=frontmatter.get("owner_confidence", "low"),
+        status=frontmatter.get("status", "unknown"),
+        status_confidence=frontmatter.get("status_confidence", "low"),
+        last_ingested=frontmatter.get("last_ingested", "unknown"),
+        last_reviewed=frontmatter.get("last_reviewed", "unknown"),
+        canonical_snapshot=frontmatter.get("canonical_snapshot", "unknown"),
+        summary=_extract_section(body, "Summary") or "Summary unavailable from current evidence.",
+        current_scope=_extract_bullet_section(body, "Current Scope"),
+        key_artifacts=_extract_bullet_section(body, "Key Artifacts"),
+        key_questions=_extract_bullet_section(body, "Key Questions"),
+        risks_or_blockers=_extract_bullet_section(body, "Risks / Blockers"),
+        next_steps=_extract_bullet_section(body, "Next Steps"),
+        related_pages=_extract_bullet_section(body, "Related Pages"),
+    )
+
+
+def _extract_section(body: str, heading: str) -> str:
+    marker = f"## {heading}\n\n"
+    if marker not in body:
+        return ""
+    section = body.split(marker, 1)[1]
+    return section.split("\n## ", 1)[0].strip()
+
+
+def _extract_bullet_section(body: str, heading: str) -> list[str]:
+    section = _extract_section(body, heading)
+    if not section or section == "- None recorded.":
+        return []
+    return [
+        line.removeprefix("- ").strip() for line in section.splitlines() if line.startswith("- ")
+    ]
