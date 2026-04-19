@@ -6,6 +6,7 @@ from pathlib import Path
 from llm_wiki.ingest import run_ingest
 from llm_wiki.init_workspace import initialize_workspace
 from llm_wiki.indexes import write_indexes
+from llm_wiki.query import answer_project_orientation
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -41,6 +42,9 @@ def main() -> int:
         return 0
     if args.command == "rebuild-indexes":
         write_indexes(args.workspace)
+        return 0
+    if args.command == "query":
+        print(answer_project_orientation(args.workspace / "wiki", args.project), end="")
         return 0
     raise NotImplementedError(f"{args.command} is not implemented yet")
 
