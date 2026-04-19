@@ -10,6 +10,26 @@
 
 ---
 
+## Execution Snapshot
+
+As of `2026-04-20`, V1 is implemented in the worktree branch with:
+
+- CLI commands for `init`, `ingest`, `query`, `rebuild-indexes`, and `lint`
+- immutable snapshots, ref manifests, project-card generation, shared indexes, and append-only logs
+- wiki-first query output with snapshot and ref evidence reporting
+- lint coverage for unknown, stale, contradictory, duplicate, and missing-review cases
+- full automated verification plus CLI smoke checks
+
+The detailed task sections below are preserved as the execution record. Another engineer should use this summary first, then consult the step-by-step sections only when they need historical implementation detail.
+
+### Remaining V1 Limitations
+
+- no explicit reset command for manual overrides
+- deduplication is scoped to a single guided-ingest slice
+- query verifies evidence locations but does not re-summarize snapshot text on demand
+
+---
+
 ## Decision Log
 
 | Topic | Options Considered | Choice | Rationale |

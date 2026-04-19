@@ -56,8 +56,8 @@ The verified smoke flow above produced:
 - `wiki/indexes/active-projects.md`
 - `wiki/indexes/by-owner.md`
 - `wiki/indexes/by-domain.md`
-- `wiki/indexes/needs-review.md`
 - `logs/ingest-log.md`
+- `wiki/indexes/needs-review.md` after running `lint`
 - `logs/lint-log.md`
 
 The verified query output included:
@@ -68,6 +68,8 @@ Slug: sample-project
 Owner: Data Team
 Status: active
 Summary: Summary unavailable from current evidence.
+Evidence snapshot: raw/fixtures/sample-project/<timestamp> (present)
+Reference manifest: refs/sample-project.yaml (present)
 Next steps:
 - ship guided ingest
 ```
@@ -88,6 +90,12 @@ The following checks were run successfully on this implementation:
 - `uv run llm-wiki rebuild-indexes --workspace /tmp/team-memory-wiki-smoke`
 - `uv run llm-wiki lint --workspace /tmp/team-memory-wiki-smoke`
 - manual inspection of generated project card, indexes, ingest log, lint log, and ref manifest
+
+## Current V1 Limits
+
+- manual project-card overrides are preserved only against later low-confidence inference; there is no explicit reset command yet
+- duplicate detection is content-based within one guided-ingest slice
+- query verifies evidence locations but does not re-summarize snapshot contents on demand
 
 ## Applicability Notes
 

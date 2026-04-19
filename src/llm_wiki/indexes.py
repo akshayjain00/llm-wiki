@@ -95,7 +95,3 @@ def write_indexes(workspace_root: Path) -> None:
     if not grouped_domains:
         by_domain_lines.append("No projects indexed.")
     (indexes_root / "by-domain.md").write_text("\n".join(by_domain_lines).rstrip() + "\n")
-    needs_review_rows = [
-        row for row in rows if row["owner"] == "unknown" or row["status"] == "unknown"
-    ]
-    (indexes_root / "needs-review.md").write_text(render_index_markdown(needs_review_rows))

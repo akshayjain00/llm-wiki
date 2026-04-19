@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 from llm_wiki.ingest import run_ingest
@@ -35,25 +36,29 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = build_parser().parse_args()
-    if args.command == "init":
-        initialize_workspace(args.workspace)
-        return 0
-    if args.command == "ingest":
-        run_ingest(args.workspace, args.target)
-        return 0
-    if args.command == "rebuild-indexes":
-        write_indexes(args.workspace)
-        return 0
-    if args.command == "query":
-        print(answer_project_orientation(args.workspace / "wiki", args.project), end="")
-        return 0
-    if args.command == "lint":
-        findings = run_lint(args.workspace / "wiki")
-        write_lint_outputs(args.workspace, findings)
-        if findings:
-            print("\n".join(findings))
-        return 0
-    raise NotImplementedError(f"{args.command} is not implemented yet")
+    try:
+        if args.command == "init":
+            initialize_workspace(args.workspace)
+            return 0
+        if args.command == "ingest":
+            run_ingest(args.workspace, args.target)
+            return 0
+        if args.command == "rebuild-indexes":
+            write_indexes(args.workspace)
+            return 0
+        if args.command == "query":
+            print(answer_project_orientation(args.workspace, args.project), end="")
+            return 0
+        if args.command == "lint":
+            findings = run_lint(args.workspace)
+            write_lint_outputs(args.workspace, findings)
+            if findings:
+                print("\n".join(findings))
+            return 0
+        raise NotImplementedError(f"{args.command} is not implemented yet")
+    except (FileNotFoundError, ValueError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

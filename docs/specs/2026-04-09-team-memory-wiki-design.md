@@ -2,7 +2,7 @@
 **Date:** 2026-04-09
 **Last Updated:** 2026-04-20
 **Author:** Codex with Akshay Jain
-**Status:** Draft - pending user review
+**Status:** Implemented V1 draft - pending user review
 
 ---
 
@@ -349,7 +349,7 @@ The user points the system at one folder or project. The system then:
 3. filters files through allow/deny rules
 4. copies eligible knowledge artifacts into `raw/`
 5. writes or updates `refs/<project-slug>.yaml`
-6. reads copied artifacts and live refs
+6. reads copied artifacts plus ref manifests, but does not infer from live repo contents
 7. infers project orientation data conservatively
 8. updates `wiki/projects/<project-slug>/project-card.md`
 9. updates affected shared indexes
@@ -977,6 +977,8 @@ Lint output should update:
 - `wiki/indexes/needs-review.md`
 - `logs/lint-log.md`
 
+`needs-review.md` is a lint-owned review surface. `rebuild-indexes` must not rewrite it.
+
 ---
 
 ## Error Handling
@@ -1006,6 +1008,21 @@ The system should fail soft and surface uncertainty.
 - Sensitive file encountered:
   - exclude content
   - log only the exclusion event, not the secret material
+
+---
+
+## CLI Exit and Error Contract
+
+V1 is CLI-first, so operators need predictable command behavior:
+
+- exit code `0`
+  - successful command completion
+- exit code `1`
+  - runtime failure such as missing project card, missing target path, or no copyable artifacts
+- exit code `2`
+  - argument parsing failure from `argparse`
+
+Runtime errors should be printed as concise stderr messages without Python tracebacks during normal operator flows.
 
 ---
 
@@ -1303,9 +1320,30 @@ The spec is implementation-ready only if V1 can satisfy all of the following:
 - generate or update a valid `project-card.md`
 - rebuild shared indexes coherently
 - write an append-only ingest log entry
-- run lint and surface at least unknown/conflicting owner or status cases
-- answer a project-orientation query using wiki-first logic without silently consulting live repo state
+- run lint and surface unknown, stale, contradictory, missing, and duplicate-review cases promised in V1
+- answer a project-orientation query using wiki-first logic, exposing snapshot and ref evidence without silently consulting live repo state
 - pass the defined verification gates for tests, static analysis, CLI end-to-end checks, and packaging smoke
+
+---
+
+## Operational Assumptions
+
+These are V1 operating rules, not future design goals:
+
+- relative ingest targets are normalized to absolute paths before they are written to project cards or ref manifests
+- stale-card detection uses a default threshold of `30` days since `last_ingested`
+- query reads `project-card.md`, checks `canonical_snapshot`, and checks the ref manifest; it does not re-scan live repos
+- lint owns `needs-review.md`; index rebuilds own all other derived index pages
+- human edits preserve existing project-card values against later low-confidence inference; explicit reset tooling is deferred
+
+---
+
+## Current V1 Known Limitations
+
+- deduplication is content-based within the guided-ingest slice; there is no multi-target batch dedup workflow in V1
+- manual override reset is not yet a first-class command
+- query verifies evidence locations but does not re-summarize snapshot content on demand
+- contradictory status lint is limited to project-card-adjacent markdown pages and manifest state
 
 ---
 
@@ -1318,6 +1356,22 @@ These assumptions are explicit and should remain visible during implementation:
 - Weak evidence resolves to `unknown`, not a guess.
 - V1 is optimized for trust and inspectability over full automation.
 - Next-phase graph, search, lifecycle, and automation rules are designed now but are not required to ship the current V1 implementation.
+
+---
+
+## Requirements Traceability (V1)
+
+| Requirement | Primary implementation | Verification |
+| --- | --- | --- |
+| Guided ingest with allow/deny filtering | `src/llm_wiki/ingest.py`, `src/llm_wiki/filters.py` | `tests/integration/test_ingest_cli.py`, `tests/unit/test_filters.py` |
+| Immutable raw snapshots | `src/llm_wiki/snapshot.py` | `tests/unit/test_snapshot.py` |
+| Ref manifests with live refs and duplicate notes | `src/llm_wiki/manifests.py`, `src/llm_wiki/ingest.py` | `tests/unit/test_manifests.py`, `tests/unit/test_ingest.py` |
+| Project-card generation and low-confidence override preservation | `src/llm_wiki/inference.py`, `src/llm_wiki/wiki_writer.py`, `src/llm_wiki/ingest.py` | `tests/unit/test_inference.py`, `tests/unit/test_ingest.py`, `tests/golden/test_project_card.py` |
+| Rebuildable shared indexes | `src/llm_wiki/indexes.py` | `tests/unit/test_indexes.py`, `tests/golden/test_index_markdown.py` |
+| Wiki-first project-orientation query with evidence reporting | `src/llm_wiki/query.py` | `tests/unit/test_query.py`, `tests/integration/test_query_cli.py` |
+| Lint-owned review surface and append-only lint log | `src/llm_wiki/lint.py`, `src/llm_wiki/cli.py` | `tests/unit/test_lint.py` |
+| CLI usability and error contract | `src/llm_wiki/cli.py` | `tests/integration/test_cli_subprocess.py` |
+| End-to-end operator verification | CLI plus docs | `README.md` smoke flow, `uv run pytest -v`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy src`, `uv build` |
 
 ---
 
