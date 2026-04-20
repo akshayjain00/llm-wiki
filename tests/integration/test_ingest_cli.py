@@ -63,3 +63,53 @@ def test_ingest_command_normalizes_relative_targets_to_absolute_refs(tmp_path: P
 
     assert str(target.resolve()) in card_text
     assert manifest["authoritative_live_paths"] == [str(target.resolve())]
+
+
+def test_ingest_command_prefers_overview_docs_over_support_files(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    target = Path("tests/fixtures/overview_priority_project")
+
+    subprocess.run(
+        ["uv", "run", "llm-wiki", "init", "--workspace", str(workspace)],
+        check=True,
+        cwd=Path.cwd(),
+    )
+    subprocess.run(
+        ["uv", "run", "llm-wiki", "ingest", "--workspace", str(workspace), "--target", str(target)],
+        check=True,
+        cwd=Path.cwd(),
+    )
+
+    card_text = (
+        workspace / "wiki" / "projects" / "overview-priority-project" / "project-card.md"
+    ).read_text()
+
+    assert 'project_name: "Monthly Review Brain"' in card_text
+    assert "aliases:" in card_text
+    assert '  - "MBR Brain"' in card_text
+    assert (
+        "Monthly Review Brain compiles evidence and narrative for recurring business reviews."
+        in card_text
+    )
+    assert "run lint after every edit" not in card_text
+
+    alias_query = subprocess.run(
+        [
+            "uv",
+            "run",
+            "llm-wiki",
+            "query",
+            "--workspace",
+            str(workspace),
+            "--project",
+            "mbr-brain",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=Path.cwd(),
+    )
+
+    assert alias_query.returncode == 0
+    assert "Project: Monthly Review Brain" in alias_query.stdout
+    assert "Aliases: MBR Brain" in alias_query.stdout

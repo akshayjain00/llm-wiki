@@ -39,6 +39,8 @@ uv run llm-wiki query \
   --project sample-project
 ```
 
+`query` accepts the canonical slug or a stored alias.
+
 Rebuild derived indexes:
 
 ```bash
@@ -84,6 +86,7 @@ The verified query output included:
 ```text
 Project: Demo Project
 Slug: sample-project
+Aliases: None recorded.
 Owner: Data Team
 Status: active
 Summary: Summary unavailable from current evidence.
@@ -115,6 +118,7 @@ The following checks were run successfully on this implementation:
 - manual project-card overrides are preserved only against later low-confidence inference; there is no explicit reset command yet
 - duplicate detection is content-based within one guided-ingest slice
 - query verifies evidence locations but does not re-summarize snapshot contents on demand
+- overview ranking and alias extraction are heuristic, not model-based; broad multi-domain repos can still require manual identity cleanup
 
 ## Applicability Notes
 

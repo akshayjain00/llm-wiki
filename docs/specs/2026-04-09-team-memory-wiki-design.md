@@ -391,6 +391,8 @@ Required frontmatter:
 ---
 project_name: "<string>"
 slug: "<kebab-case>"
+aliases:
+  - "<alternate name>"
 domain: "<string|unknown>"
 source_roots:
   - "<absolute path>"
@@ -410,6 +412,7 @@ Required body sections:
 
 - Project name
 - Slug
+- Aliases
 - Summary
 - Domain / category
 - Source roots
@@ -441,6 +444,12 @@ If evidence is weak or conflicting:
 - set owner/status to `unknown`
 - reduce confidence
 - record the ambiguity in open questions
+
+Canonical identity rules:
+
+- prefer ranked overview docs over support files for project name and summary extraction
+- treat `CLAUDE.md` and `AGENTS.md` as supporting instructions, not canonical project identity, unless no better overview evidence exists
+- preserve alternate titles and meaningful folder identity as aliases when they differ from the canonical project name
 
 ---
 
@@ -1333,6 +1342,7 @@ These are V1 operating rules, not future design goals:
 - relative ingest targets are normalized to absolute paths before they are written to project cards or ref manifests
 - stale-card detection uses a default threshold of `30` days since `last_ingested`
 - query reads `project-card.md`, checks `canonical_snapshot`, and checks the ref manifest; it does not re-scan live repos
+- query accepts either the canonical slug or a stored alias and always returns the canonical project record
 - lint owns `needs-review.md`; index rebuilds own all other derived index pages
 - human edits preserve existing project-card values against later low-confidence inference; explicit reset tooling is deferred
 

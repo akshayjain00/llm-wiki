@@ -6,6 +6,7 @@ def test_render_project_card_contains_required_frontmatter_and_sections() -> Non
     card = ProjectCardData(
         project_name="Demo Project",
         slug="demo-project",
+        aliases=["DP", "Forecast Demo"],
         owner="Data Team",
         owner_confidence="medium",
         status="active",
@@ -21,8 +22,11 @@ def test_render_project_card_contains_required_frontmatter_and_sections() -> Non
 
     assert 'project_name: "Demo Project"' in markdown
     assert 'slug: "demo-project"' in markdown
+    assert "aliases:" in markdown
+    assert '  - "DP"' in markdown
     assert 'owner: "Data Team"' in markdown
     assert "status: active" in markdown
+    assert "## Aliases" in markdown
     assert "## Slug" in markdown
     assert "## Summary" in markdown
     assert "## Owner Confidence" in markdown

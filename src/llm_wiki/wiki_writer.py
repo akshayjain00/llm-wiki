@@ -18,6 +18,8 @@ def _quote(value: str) -> str:
 
 
 def _render_frontmatter_list(name: str, values: list[str]) -> list[str]:
+    if not values:
+        return [f"{name}: []"]
     return [f"{name}:"] + [f"  - {_quote(value)}" for value in values]
 
 
@@ -25,6 +27,7 @@ def _render_frontmatter(card: ProjectCardData) -> str:
     lines = [
         f"project_name: {_quote(card.project_name)}",
         f"slug: {_quote(card.slug)}",
+        *_render_frontmatter_list("aliases", card.aliases),
         f"domain: {_quote(card.domain)}",
         *_render_frontmatter_list("source_roots", card.source_roots),
         *_render_frontmatter_list("live_refs", card.live_refs),
@@ -51,6 +54,10 @@ def render_project_card(card: ProjectCardData) -> str:
         "## Slug",
         "",
         card.slug,
+        "",
+        "## Aliases",
+        "",
+        _render_list(card.aliases),
         "",
         "## Summary",
         "",
@@ -172,6 +179,7 @@ def load_project_card(card_path: Path) -> ProjectCardData:
     return ProjectCardData(
         project_name=frontmatter.get("project_name", card_path.parent.name),
         slug=frontmatter.get("slug", card_path.parent.name),
+        aliases=list(frontmatter.get("aliases") or []),
         domain=frontmatter.get("domain", "unknown"),
         source_roots=list(frontmatter.get("source_roots", [])),
         live_refs=list(frontmatter.get("live_refs", [])),

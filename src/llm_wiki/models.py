@@ -12,6 +12,7 @@ ProjectStatus = Literal["planned", "active", "paused", "blocked", "completed", "
 class ProjectCardData:
     project_name: str
     slug: str
+    aliases: list[str] = field(default_factory=list)
     domain: str = "unknown"
     source_roots: list[str] = field(default_factory=list)
     live_refs: list[str] = field(default_factory=list)

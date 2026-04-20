@@ -23,6 +23,18 @@ from llm_wiki.models import ProjectCardData
 DEFAULT_SUMMARY = "Summary unavailable from current evidence."
 
 
+def _humanize_target_name(target: Path) -> str:
+    return target.name.replace("-", " ").replace("_", " ").title()
+
+
+def _should_promote_target_alias(target: Path, inferred_name: str) -> bool:
+    if any(separator in target.name for separator in ("-", "_", " ")):
+        return False
+    return slugify_project_name(_humanize_target_name(target)) != slugify_project_name(
+        inferred_name
+    )
+
+
 def collect_copyable_files(target: Path) -> list[Path]:
     return sorted(path for path in target.rglob("*") if path.is_file() and should_copy_file(path))
 
@@ -51,6 +63,14 @@ def deduplicate_files(files: list[Path], root: Path) -> tuple[list[Path], list[s
 def _merge_with_existing_card(
     existing: ProjectCardData, incoming: ProjectCardData
 ) -> ProjectCardData:
+    reviewed = existing.last_reviewed != "unknown"
+
+    aliases = list(existing.aliases) if reviewed else list(existing.aliases)
+    if not reviewed:
+        for alias in incoming.aliases:
+            if alias not in aliases:
+                aliases.append(alias)
+
     owner = incoming.owner
     owner_confidence = incoming.owner_confidence
     if incoming.owner_confidence == "low" and existing.owner != "unknown":
@@ -64,13 +84,17 @@ def _merge_with_existing_card(
         status_confidence = existing.status_confidence
 
     summary = incoming.summary
-    if incoming.summary == DEFAULT_SUMMARY and existing.summary != DEFAULT_SUMMARY:
+    if reviewed and existing.summary != DEFAULT_SUMMARY:
+        summary = existing.summary
+    elif incoming.summary == DEFAULT_SUMMARY and existing.summary != DEFAULT_SUMMARY:
         summary = existing.summary
 
     return replace(
         incoming,
+        project_name=existing.project_name if reviewed else incoming.project_name,
+        aliases=aliases,
         domain=existing.domain
-        if incoming.domain == "unknown" and existing.domain != "unknown"
+        if reviewed or (incoming.domain == "unknown" and existing.domain != "unknown")
         else incoming.domain,
         owner=owner,
         owner_confidence=owner_confidence,
@@ -118,6 +142,14 @@ def run_ingest(workspace: Path, target: Path, ingest_timestamp: str | None = Non
     project_card = replace(
         inferred,
         slug=project_slug,
+        aliases=[
+            *inferred.aliases,
+            *(
+                [_humanize_target_name(target)]
+                if _should_promote_target_alias(target, inferred.project_name)
+                else []
+            ),
+        ],
         source_roots=[str(target.parent)],
         live_refs=[str(target)],
         last_ingested=timestamp,

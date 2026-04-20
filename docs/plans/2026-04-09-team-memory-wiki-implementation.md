@@ -18,6 +18,9 @@ As of `2026-04-20`, V1 is implemented in the worktree branch with:
 - immutable snapshots, ref manifests, project-card generation, shared indexes, and append-only logs
 - wiki-first query output with snapshot and ref evidence reporting
 - lint coverage for unknown, stale, contradictory, duplicate, and missing-review cases
+- ranked overview-document preference for canonical identity and summary extraction
+- first-class alias persistence plus alias-aware query lookup
+- support-file filtering for `next_steps` extraction
 - full automated verification plus CLI smoke checks
 
 The detailed task sections below are preserved as the execution record. Another engineer should use this summary first, then consult the step-by-step sections only when they need historical implementation detail.
@@ -27,6 +30,7 @@ The detailed task sections below are preserved as the execution record. Another 
 - no explicit reset command for manual overrides
 - deduplication is scoped to a single guided-ingest slice
 - query verifies evidence locations but does not re-summarize snapshot text on demand
+- alias extraction is still heuristic and may need manual curation for broad multi-domain repos
 
 ---
 
@@ -128,8 +132,8 @@ Playwright is intentionally out of scope for this plan because V1 has no browser
 - Do not inspect indexes immediately after rebuilding in parallel with other commands; refresh first, then inspect.
 
 **Implementation follow-up to watch:**
-- Add optional alias support or a canonical-name override so folder-name slugs and semantic project names do not diverge awkwardly.
-- Consider a stronger title-selection heuristic that prefers cross-referenced overview docs over the first matching markdown file.
+- Alias support and overview-priority inference are now implemented in V1.
+- Continue tightening ranking for multi-project repos where one support or onboarding file still over-represents the slice.
 
 ### Iteration 3 — `ViDATA`
 
@@ -146,7 +150,7 @@ Playwright is intentionally out of scope for this plan because V1 has no browser
 - Normalize historical names or aliases in the card whenever the docs use more than one identity for the same service.
 
 **Implementation follow-up to watch:**
-- Add first-class alias support in the card schema or indexes.
+- First-class alias support is now implemented in the card schema and query path.
 - Consider surfacing detected secret exclusions and repo-root status in the project card so operators can audit ingest trust more easily.
 
 ### Iteration 4 — `mbr_brain`
@@ -164,8 +168,8 @@ Playwright is intentionally out of scope for this plan because V1 has no browser
 - When broad repos must be ingested, anchor curation on onboarding/architecture docs rather than whichever file the heuristics pick first.
 
 **Implementation follow-up to watch:**
-- Add explicit overview-document priority (`README`, `docs/onboarding`, architecture docs) before fallback titles.
-- Add better filtering so guidance files such as `CLAUDE.md` do not dominate title or next-step extraction.
+- Overview-document priority and support-file filtering are now implemented in V1.
+- Continue tightening ranking for broad system repos with multiple plausible canonical narratives.
 
 ### Cross-Iteration Pattern
 
@@ -177,6 +181,22 @@ After four iterations, the target-quality ordering is clear:
 4. broad multi-domain repo
 
 Future sessions should select targets in that order whenever possible.
+
+### Validation Pass — reviewed-card stability
+
+**Observed behavior:**
+- Improved inference can still damage a live workspace if a previously curated project card is re-ingested before reviewed-card preservation is implemented.
+- Alias inference can become noisy if every alternate strong title is retained instead of a small curated set.
+- The correct validation loop is not just repo tests; it must include re-ingesting representative real projects into the durable workspace and inspecting the resulting cards.
+
+**Operator adjustment for future iterations:**
+- Treat `last_reviewed` as the boundary between heuristic updates and protected curated identity.
+- After heuristic changes, re-run real ingests on representative reviewed projects before claiming the change is safe.
+- If a reviewed card has already been polluted by a bad heuristic pass, restore the canonical project name, summary, and aliases manually before trusting the workspace again.
+
+**Implementation follow-up to watch:**
+- Reviewed cards now preserve canonical project name, summary, domain, and aliases across future ingests.
+- Inferred aliases are capped and should stay concise, but broad multi-domain repos still require manual alias pruning.
 
 ---
 

@@ -57,6 +57,7 @@ It returns a text answer with:
 
 - project name
 - slug
+- aliases
 - owner
 - status
 - summary
@@ -98,16 +99,20 @@ Current V1 checks include:
 
 ## Important Implementation Details
 
-### Inference Is Pattern-Based
+### Inference Is Ranked And Pattern-Based
 
-V1 inference is deliberately simple. It looks for:
+V1 inference is deliberately heuristic, but not purely first-match. It:
 
-- the first markdown `# H1` as the project name
+- ranks overview-style docs above support files such as `CLAUDE.md` and `AGENTS.md`
+- prefers stronger overview docs for project identity and summary extraction
+- extracts aliases from alternate strong titles and folder identity
 - `Owner: ...`
 - `Status: ...`
-- `Next steps: ...`
+- `Next steps: ...` and next-step sections from preferred docs
 
 If conflicting owner or status values are found, the result drops to `unknown` with low confidence.
+
+Support files are intentionally excluded from canonical `next_steps` extraction so operational instructions do not leak into maintained project memory.
 
 ### Manual Edits Matter
 
@@ -121,6 +126,7 @@ The raw snapshot is immutable and timestamped. It is the evidence base for what 
 
 - Keep ingests scoped to one project slice at a time.
 - Put useful project context in copyable markdown files.
+- Prefer targets with one strong overview, onboarding, architecture, or charter doc.
 - Query immediately after ingest to inspect the current maintained state.
 - Use lint as your trust gate.
 - Treat project cards as the canonical summary layer.
