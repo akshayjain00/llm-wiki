@@ -9,6 +9,7 @@ from llm_wiki.init_workspace import initialize_workspace
 from llm_wiki.indexes import write_indexes
 from llm_wiki.lint import run_lint, write_lint_outputs
 from llm_wiki.query import answer_project_orientation
+from llm_wiki.state_db import ensure_schema, index_db_path
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -60,6 +61,12 @@ def main() -> int:
         if args.command == "rebuild-indexes":
             write_indexes(args.workspace)
             return 0
+        if args.command == "rebuild-retrieval":
+            ensure_schema(index_db_path(args.workspace))
+            dirty_flag = args.workspace / "state" / "retrieval-dirty.flag"
+            if dirty_flag.exists():
+                dirty_flag.unlink()
+            return 0
         if args.command == "query":
             print(answer_project_orientation(args.workspace, args.project), end="")
             return 0
@@ -69,7 +76,7 @@ def main() -> int:
             if findings:
                 print("\n".join(findings))
             return 0
-        if args.command in {"rebuild-retrieval", "health", "migrate-workspace", "approve-writeback"}:
+        if args.command in {"health", "migrate-workspace", "approve-writeback"}:
             raise NotImplementedError(f"{args.command} is not implemented yet")
         raise NotImplementedError(f"{args.command} is not implemented yet")
     except (FileNotFoundError, ValueError) as exc:
