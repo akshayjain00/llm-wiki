@@ -131,6 +131,7 @@ Do **not** split this into a separate API project, graph project, or UI project 
 | Write-back mode | none, manual approval, automatic | manual approval | Adds compounding memory without sacrificing operator control. |
 | Product surface | CLI only, local API, UI | CLI with internal service boundaries | Matches the solo-operator workflow and keeps rollout small. |
 | Rollout | in-place, fresh workspace only, side-by-side versioned | side-by-side versioned | Safest path for an already-trusted V1 workspace. |
+| Migration target shape | in-place schema rewrite, sibling workspace copy, versioned state copy | sibling workspace copy plus versioned derived state | Keeps V1 untouched while letting V2 run and be verified independently. |
 | Entity pages | none, lightweight, full entity layer | none in Phase 2 | Prevents graph work from diluting the first value target. |
 | Modalities | text-only, text + PDF extraction, multimodal | text + PDF text extraction | Stays within text-first scope while covering an important allowed source type. |
 
@@ -261,8 +262,8 @@ WORKSPACE_DIRS = (
 )
 
 SCHEMA_SEED_FILES = {
-    "workspace-config.yaml": "workspace_version: 2\nopenai_model: gpt-5-mini\n",
-    "retrieval-config.yaml": "fts_top_k: 20\nsemantic_top_k: 20\nfusion_weight_lexical: 0.6\nfusion_weight_semantic: 0.4\n",
+    "workspace-config.yaml": "workspace_version: 2\nquery_model: gpt-5-mini\nembedding_model: text-embedding-3-small\nmax_query_cost_usd: 0.25\nwriteback_enabled: true\nmigration_safety_mode: side_by_side\n",
+    "retrieval-config.yaml": "fts_top_k: 20\nsemantic_top_k: 20\nfusion_weight_lexical: 0.6\nfusion_weight_semantic: 0.4\nchunk_max_lines: 20\nchunk_overlap_lines: 3\n",
     "prompt-contracts.md": "# Prompt Contracts\n\nPhase 2 prompt contracts live here.\n",
 }
 
@@ -357,7 +358,9 @@ def test_ensure_schema_creates_workspace_meta_and_core_tables(tmp_path: Path) ->
     assert "snapshot_files" in names
     assert "chunks" in names
     assert "fts_chunks" in names
+    assert "embeddings" in names
     assert "query_runs" in names
+    assert "query_evidence" in names
     assert "writeback_proposals" in names
 ```
 
@@ -491,14 +494,43 @@ SCHEMA_STATEMENTS = (
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS embeddings (
+        chunk_id TEXT PRIMARY KEY,
+        provider TEXT NOT NULL,
+        model TEXT NOT NULL,
+        dimensions INTEGER NOT NULL,
+        vector_blob BLOB NOT NULL,
+        embedded_at TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS query_evidence (
+        query_id TEXT NOT NULL,
+        chunk_id TEXT NOT NULL,
+        lexical_score REAL NOT NULL,
+        semantic_score REAL NOT NULL,
+        fused_score REAL NOT NULL,
+        rank INTEGER NOT NULL
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS writeback_proposals (
         proposal_id TEXT PRIMARY KEY,
         query_id TEXT NOT NULL,
         target_path TEXT NOT NULL,
         target_page_type TEXT NOT NULL,
         proposal_reason TEXT NOT NULL,
-        status TEXT NOT NULL,
-        reviewed_at TEXT
+        proposal_hash TEXT NOT NULL,
+        source_workspace_path TEXT NOT NULL,
+        proposed_at TEXT NOT NULL,
+        proposed_by TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('pending', 'approved', 'rejected', 'applied', 'failed')),
+        reviewed_at TEXT,
+        reviewed_by TEXT,
+        review_decision TEXT,
+        review_reason TEXT,
+        applied_at TEXT,
+        target_content_hash TEXT
     )
     """,
 )
@@ -515,6 +547,67 @@ def ensure_schema(db_path: Path) -> None:
             "INSERT INTO workspace_meta (workspace_version, schema_version, created_at, migrated_at) VALUES (?, ?, datetime('now'), NULL)",
             (WORKSPACE_SCHEMA_VERSION, WORKSPACE_SCHEMA_VERSION),
         )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def clone_workspace_for_migration(source_workspace: Path, target_workspace: Path) -> None:
+    """
+    Create a side-by-side v2 workspace copy so the original V1 workspace stays intact.
+    """
+    import shutil
+
+    if target_workspace.exists():
+        raise ValueError("target migration workspace already exists")
+    shutil.copytree(source_workspace, target_workspace)
+```
+
+```python
+# src/llm_wiki/state_db.py
+import hashlib
+
+from llm_wiki.models import load_project_card
+
+
+def rebuild_workspace_metadata(db_path: Path, workspace: Path) -> None:
+    conn = sqlite3.connect(db_path)
+    try:
+        project_cards = sorted((workspace / "wiki" / "projects").rglob("project-card.md"))
+        for card_path in project_cards:
+            card = load_project_card(card_path)
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO projects (
+                    project_slug, project_name, owner, status, canonical_project_card_path, last_ingested, last_indexed
+                ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (
+                    card.slug,
+                    card.project_name,
+                    card.owner,
+                    card.status,
+                    str(card_path.relative_to(workspace)),
+                    card.last_ingested,
+                ),
+            )
+        for page_path in sorted((workspace / "wiki").rglob("*.md")):
+            content = page_path.read_text()
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO wiki_pages (
+                    page_id, project_slug, page_type, path, title, content_hash, last_modified, manual_edit_detected
+                ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), 0)
+                """,
+                (
+                    str(page_path.relative_to(workspace)),
+                    page_path.parts[-2] if "projects" in page_path.parts else None,
+                    "report" if "reports" in page_path.parts else page_path.stem.replace("-", "_"),
+                    str(page_path.relative_to(workspace)),
+                    content.splitlines()[0].removeprefix("# ").strip() if content else page_path.stem,
+                    hashlib.sha256(content.encode("utf-8")).hexdigest(),
+                ),
+            )
         conn.commit()
     finally:
         conn.close()
@@ -839,6 +932,16 @@ def test_parse_embedding_response_extracts_vector_and_model() -> None:
     result = parse_embedding_response(payload)
     assert result.model == "text-embedding-3-small"
     assert result.vector == [0.1, 0.2]
+
+
+def test_openai_config_uses_budgeted_defaults() -> None:
+    config = OpenAIConfig(
+        embedding_model="text-embedding-3-small",
+        query_model="gpt-5-mini",
+        api_key_env="OPENAI_API_KEY",
+    )
+    assert config.embedding_model == "text-embedding-3-small"
+    assert config.query_model == "gpt-5-mini"
 ```
 
 ```python
@@ -984,6 +1087,27 @@ def test_fuse_ranked_results_prefers_joint_matches() -> None:
 ```
 
 ```python
+# tests/unit/test_query.py
+from pathlib import Path
+
+import pytest
+
+from llm_wiki.query_runtime import run_phase2_query
+
+
+def test_run_phase2_query_discloses_snapshot_fallback(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    result = run_phase2_query(workspace=tmp_path, projects=["hcv", "notion-sync"], question="Compare maturity.")
+    assert "Used snapshot fallback:" in result
+
+
+def test_run_phase2_query_rejects_uncited_answers(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    with pytest.raises(ValueError, match="no valid evidence"):
+        run_phase2_query(workspace=tmp_path, projects=["hcv", "notion-sync"], question="Answer with no evidence.")
+```
+
+```python
 # tests/integration/test_phase2_query_cli.py
 def test_query_accepts_two_projects_and_returns_citations(run_cli, phase2_workspace, monkeypatch) -> None:
     workspace = phase2_workspace()
@@ -1072,7 +1196,9 @@ def run_phase2_query(*, workspace: Path, projects: list[str], question: str) -> 
     # 2. retrieve wiki chunks and snapshot chunks separately
     # 3. fuse lexical and semantic rankings
     # 4. persist query_runs and query_evidence rows
-    # 5. emit citations from the selected evidence set
+    # 5. enforce configured max query cost before the final model call
+    # 6. emit citations from the selected evidence set
+    # 7. raise if the final answer cannot be supported by at least one cited evidence row
     return (
         "Answer:\n"
         f"Synthesized response for {', '.join(projects)}.\n\n"
@@ -1168,7 +1294,11 @@ git commit -m "feat: add hybrid retrieval query runtime"
 
 ```python
 # tests/unit/test_writeback.py
-from llm_wiki.writeback import choose_writeback_target
+from pathlib import Path
+
+import pytest
+
+from llm_wiki.writeback import apply_approved_writeback, choose_writeback_target
 
 
 def test_choose_writeback_target_uses_reports_for_cross_project_outputs() -> None:
@@ -1180,12 +1310,65 @@ def test_choose_writeback_target_uses_reports_for_cross_project_outputs() -> Non
     assert target.endswith("wiki/reports/2026-05-05-maturity-comparison.md")
 
 
+def test_choose_writeback_target_uses_project_overview_for_single_project_pages() -> None:
+    target = choose_writeback_target(
+        project_slugs=["hcv"],
+        topic_slug="project-overview",
+        page_type="overview",
+    )
+    assert target == "wiki/projects/hcv/overview.md"
+
+
+def test_choose_writeback_target_rejects_overview_for_multiple_projects() -> None:
+    with pytest.raises(ValueError, match="overview requires exactly one project"):
+        choose_writeback_target(
+            project_slugs=["hcv", "notion-sync"],
+            topic_slug="project-overview",
+            page_type="overview",
+        )
+
+
+def test_choose_writeback_target_rejects_unknown_page_type() -> None:
+    with pytest.raises(ValueError, match="unknown page type"):
+        choose_writeback_target(
+            project_slugs=["hcv"],
+            topic_slug="bad-route",
+            page_type="unexpected",
+        )
+
+
+def test_choose_writeback_target_rejects_report_for_single_project() -> None:
+    with pytest.raises(ValueError, match="at least two projects"):
+        choose_writeback_target(
+            project_slugs=["hcv"],
+            topic_slug="bad-report",
+            page_type="report",
+        )
+
+
+def test_choose_writeback_target_rejects_decisions_for_multiple_projects() -> None:
+    with pytest.raises(ValueError, match="decisions requires exactly one project"):
+        choose_writeback_target(
+            project_slugs=["hcv", "notion-sync"],
+            topic_slug="bad-decisions",
+            page_type="decisions",
+        )
+
+
 def test_apply_writeback_refuses_to_overwrite_manual_overview(tmp_path: Path) -> None:
     page = tmp_path / "wiki" / "projects" / "hcv" / "overview.md"
     page.parent.mkdir(parents=True, exist_ok=True)
     page.write_text("# Overview\n\nHuman curated section.\n")
     with pytest.raises(ValueError, match="manual review required"):
         apply_approved_writeback(page, "# Overview\n\nMachine rewrite.\n", allow_replace=False)
+
+
+def test_apply_writeback_requires_explicit_replace_for_decisions(tmp_path: Path) -> None:
+    page = tmp_path / "wiki" / "projects" / "hcv" / "decisions.md"
+    page.parent.mkdir(parents=True, exist_ok=True)
+    page.write_text("# Decisions\n\nHuman curated decision.\n")
+    with pytest.raises(ValueError, match="manual review required"):
+        apply_approved_writeback(page, "# Decisions\n\nMachine rewrite.\n", allow_replace=False)
 ```
 
 ```python
@@ -1201,6 +1384,37 @@ def test_approve_writeback_materializes_report(run_cli, phase2_workspace) -> Non
     )
     assert result.returncode == 0
     assert any((workspace / "wiki" / "reports").glob("*.md"))
+```
+
+```python
+# tests/golden/test_query_log_markdown.py
+from llm_wiki.wiki_writer import render_query_log_summary
+
+
+def test_render_query_log_summary_reports_audit_counts() -> None:
+    rendered = render_query_log_summary(total_queries=3, snapshot_fallbacks=1, writebacks=2)
+    assert rendered.startswith("# Query Log Summary")
+    assert "- total queries: 3" in rendered
+    assert "- snapshot fallbacks: 1" in rendered
+    assert "- write-backs: 2" in rendered
+```
+
+```python
+# tests/golden/test_report_markdown.py
+from llm_wiki.writeback import render_report_markdown
+
+
+def test_render_report_markdown_has_question_answer_and_citations() -> None:
+    rendered = render_report_markdown(
+        title="Cross-Project Report",
+        question="Compare project maturity.",
+        answer="The report synthesizes evidence across both projects.",
+        citations=["[wiki:wiki/projects/hcv/project-card.md#Summary]"],
+    )
+    assert rendered.startswith("# Cross-Project Report")
+    assert "## Question" in rendered
+    assert "## Answer" in rendered
+    assert "## Citations" in rendered
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -1225,13 +1439,37 @@ from pathlib import Path
 
 def choose_writeback_target(*, project_slugs: list[str], topic_slug: str, page_type: str) -> str:
     today = date.today().isoformat()
-    if page_type == "report" or len(project_slugs) > 1:
+    if page_type == "report":
+        if len(project_slugs) < 2:
+            raise ValueError("report write-backs require at least two projects")
         return f"wiki/reports/{today}-{topic_slug}.md"
-    return f"wiki/projects/{project_slugs[0]}/overview.md"
+    if page_type == "decisions":
+        if len(project_slugs) != 1:
+            raise ValueError("decisions requires exactly one project")
+        return f"wiki/projects/{project_slugs[0]}/decisions.md"
+    if page_type == "overview":
+        if len(project_slugs) != 1:
+            raise ValueError("overview requires exactly one project")
+        return f"wiki/projects/{project_slugs[0]}/overview.md"
+    raise ValueError(f"unknown page type: {page_type}")
 
 
 def render_report_markdown(*, title: str, question: str, answer: str, citations: list[str]) -> str:
     lines = [f"# {title}", "", "## Question", "", question, "", "## Answer", "", answer, "", "## Citations", ""]
+    lines.extend(f"- {citation}" for citation in citations)
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_project_overview_markdown(*, title: str, summary: str, citations: list[str]) -> str:
+    lines = [f"# {title}", "", "## Summary", "", summary, "", "## Citations", ""]
+    lines.extend(f"- {citation}" for citation in citations)
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_decisions_markdown(*, title: str, decision: str, rationale: str, citations: list[str]) -> str:
+    lines = [f"# {title}", "", "## Decision", "", decision, "", "## Rationale", "", rationale, "", "## Citations", ""]
     lines.extend(f"- {citation}" for citation in citations)
     lines.append("")
     return "\n".join(lines)
@@ -1266,16 +1504,30 @@ def render_query_log_entry(
             "",
         ]
     )
+
+
+def render_query_log_summary(*, total_queries: int, snapshot_fallbacks: int, writebacks: int) -> str:
+    return "\n".join(
+        [
+            "# Query Log Summary",
+            "",
+            f"- total queries: {total_queries}",
+            f"- snapshot fallbacks: {snapshot_fallbacks}",
+            f"- write-backs: {writebacks}",
+            "",
+        ]
+    )
 ```
 
 ```python
 # src/llm_wiki/cli.py
 if args.command == "approve-writeback":
     # Final implementation requirement:
-    # 1. load pending proposal from SQLite
+    # 1. load a pending proposal from SQLite and validate its state
     # 2. render the durable markdown target
     # 3. refuse unsafe overwrite without explicit replace flag
-    # 4. update writeback_proposals status and query log
+    # 4. update writeback_proposals status through pending -> approved -> applied or rejected -> failed
+    # 5. append the query log and audit trail
     print(f"Approved write-back proposal {args.proposal_id}")
     return 0
 ```
@@ -1317,6 +1569,7 @@ git commit -m "feat: add manual approval writeback flow"
 
 ```python
 # tests/unit/test_health.py
+import sqlite3
 from pathlib import Path
 
 from llm_wiki.health import run_health_checks
@@ -1335,6 +1588,23 @@ def test_run_health_checks_reports_missing_query_log(tmp_path: Path) -> None:
     ensure_schema(db_path)
     findings = run_health_checks(tmp_path)
     assert "query log missing" in findings
+
+
+def test_run_health_checks_reports_schema_mismatch_and_missing_embeddings(tmp_path: Path) -> None:
+    db_path = tmp_path / "state" / "index.db"
+    ensure_schema(db_path)
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        "INSERT INTO chunks (chunk_id, source_kind, page_id, file_id, project_slug, chunk_text, content_hash, line_start, line_end, token_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        ("c1", "snapshot_file", None, "f1", "demo", "alpha beta", "h1", 1, 1, 2),
+    )
+    conn.execute("UPDATE workspace_meta SET schema_version = 999")
+    conn.commit()
+    conn.close()
+    findings = run_health_checks(tmp_path)
+    assert "schema version mismatch" in findings
+    assert "missing embedding rows" in findings
+    assert "fts index drift detected" in findings
 ```
 
 ```python
@@ -1343,8 +1613,9 @@ def test_migrate_workspace_creates_phase2_state_non_destructively(run_cli, seed_
     workspace = seed_workspace()
     result = run_cli("migrate-workspace", "--workspace", str(workspace), "--target-version", "2")
     assert result.returncode == 0
-    assert (workspace / "state" / "index.db").exists()
     assert (workspace / "wiki" / "projects").exists()
+    assert (workspace.parent / f"{workspace.name}-v2").exists()
+    assert (workspace.parent / f"{workspace.name}-v2" / "state" / "index.db").exists()
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -1376,12 +1647,21 @@ def run_health_checks(workspace: Path) -> list[str]:
         findings.append("query log missing")
     conn = sqlite3.connect(db_path)
     try:
+        meta_row = conn.execute("SELECT workspace_version, schema_version FROM workspace_meta").fetchone()
+        if meta_row is not None and meta_row[0] != meta_row[1]:
+            findings.append("schema version mismatch")
         chunk_count = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
         if chunk_count == 0:
             findings.append("retrieval index has no chunks")
         query_run_table = conn.execute("SELECT COUNT(*) FROM query_runs").fetchone()[0]
         if query_run_table == 0:
             findings.append("no query runs recorded yet")
+        embedded_count = conn.execute("SELECT COUNT(*) FROM embeddings").fetchone()[0]
+        if chunk_count > 0 and embedded_count == 0:
+            findings.append("missing embedding rows")
+        fts_count = conn.execute("SELECT COUNT(*) FROM fts_chunks").fetchone()[0]
+        if fts_count != chunk_count:
+            findings.append("fts index drift detected")
     finally:
         conn.close()
     return findings
@@ -1391,11 +1671,13 @@ def run_health_checks(workspace: Path) -> list[str]:
 # src/llm_wiki/migration.py
 from pathlib import Path
 
-from llm_wiki.state_db import ensure_schema
+from llm_wiki.state_db import clone_workspace_for_migration, ensure_schema
 
 
 def migrate_workspace_to_v2(workspace: Path) -> None:
-    ensure_schema(workspace / "state" / "index.db")
+    target_workspace = workspace.parent / f"{workspace.name}-v2"
+    clone_workspace_for_migration(workspace, target_workspace)
+    ensure_schema(target_workspace / "state" / "index.db")
 ```
 
 ```python
@@ -1451,12 +1733,15 @@ git commit -m "feat: add phase 2 health checks and migration flow"
 **Files:**
 - Create: `evals/phase2_query_cases.yaml`
 - Create: `docs/guides/phase2-migration.md`
+- Create: `docs/guides/phase2-quickstart.md`
 - Modify: `README.md`
 - Modify: `tests/integration/test_cli_subprocess.py`
 - Test: `tests/integration/test_phase2_query_cli.py`
 - Test: `tests/integration/test_rebuild_retrieval_cli.py`
 - Test: `tests/integration/test_migrate_workspace_cli.py`
 - Test: `tests/integration/test_approve_writeback_cli.py`
+- Test: `tests/golden/test_project_overview_markdown.py`
+- Test: `tests/golden/test_decisions_markdown.py`
 
 - [ ] **Step 1: Write the failing documentation and eval assertions**
 
@@ -1467,6 +1752,46 @@ def test_readme_mentions_phase2_commands() -> None:
     assert "rebuild-retrieval" in readme
     assert "approve-writeback" in readme
     assert "wiki/reports/" in readme
+
+
+def test_quickstart_mentions_first_time_flow() -> None:
+    quickstart = Path("docs/guides/phase2-quickstart.md").read_text()
+    assert "first query" in quickstart
+    assert "migrate-workspace" in quickstart
+```
+
+```python
+# tests/golden/test_project_overview_markdown.py
+from llm_wiki.writeback import render_project_overview_markdown
+
+
+def test_render_project_overview_markdown_has_summary_and_citations() -> None:
+    rendered = render_project_overview_markdown(
+        title="Project Overview",
+        summary="A durable overview for new contributors.",
+        citations=["[wiki:wiki/projects/hcv/project-card.md#Summary]"],
+    )
+    assert rendered.startswith("# Project Overview")
+    assert "## Summary" in rendered
+    assert "## Citations" in rendered
+```
+
+```python
+# tests/golden/test_decisions_markdown.py
+from llm_wiki.writeback import render_decisions_markdown
+
+
+def test_render_decisions_markdown_has_decision_rationale_and_citations() -> None:
+    rendered = render_decisions_markdown(
+        title="Decisions",
+        decision="Keep the workspace CLI-first.",
+        rationale="It matches the current operator workflow.",
+        citations=["[wiki:wiki/projects/hcv/project-card.md#Summary]"],
+    )
+    assert rendered.startswith("# Decisions")
+    assert "## Decision" in rendered
+    assert "## Rationale" in rendered
+    assert "## Citations" in rendered
 ```
 
 ```yaml
@@ -1517,6 +1842,18 @@ Phase 2 durable cross-project outputs are written under `wiki/reports/`.
 4. Run at least one multi-project query and inspect citations before broader adoption.
 ```
 
+```markdown
+# docs/guides/phase2-quickstart.md
+
+# Phase 2 Quickstart
+
+1. Initialize or copy a workspace.
+2. Run `uv run llm-wiki migrate-workspace --workspace <path> --target-version 2`.
+3. Run `uv run llm-wiki rebuild-retrieval --workspace <path>-v2`.
+4. Run the first query with two named projects and inspect citations.
+5. Approve one write-back only after reviewing the rendered markdown.
+```
+
 ```yaml
 # evals/phase2_query_cases.yaml
 cases:
@@ -1527,6 +1864,12 @@ cases:
       - "[wiki:"
       - "[snapshot:"
     expected_writeback_target: "wiki/reports/"
+  - id: single-project-overview
+    projects: ["hcv"]
+    question: "Summarize this project for a new contributor."
+    expected_citation_prefixes:
+      - "[wiki:"
+    expected_writeback_target: "wiki/projects/hcv/overview.md"
 ```
 
 - [ ] **Step 4: Run the full verification suite**
@@ -1553,7 +1896,7 @@ Expected:
 - [ ] **Step 5: Commit**
 
 ```bash
-git add README.md docs/guides/phase2-migration.md evals/phase2_query_cases.yaml tests/integration/test_cli_subprocess.py tests/integration/test_phase2_query_cli.py tests/integration/test_rebuild_retrieval_cli.py tests/integration/test_migrate_workspace_cli.py tests/integration/test_approve_writeback_cli.py
+git add README.md docs/guides/phase2-migration.md docs/guides/phase2-quickstart.md evals/phase2_query_cases.yaml tests/integration/test_cli_subprocess.py tests/integration/test_phase2_query_cli.py tests/integration/test_rebuild_retrieval_cli.py tests/integration/test_migrate_workspace_cli.py tests/integration/test_approve_writeback_cli.py tests/golden/test_project_overview_markdown.py tests/golden/test_decisions_markdown.py
 git commit -m "docs: finalize phase 2 retrieval rollout guidance"
 ```
 
@@ -1573,6 +1916,7 @@ Before executing, verify these spec areas are covered by tasks:
 - query logging
 - expanded lint/health
 - side-by-side migration
+- first-time user quickstart and onboarding
 - evals and verification
 
 If any one of these lacks a corresponding task, add the task before implementation starts.
@@ -1602,24 +1946,25 @@ uv build
 
 ```bash
 uv run llm-wiki migrate-workspace --workspace /tmp/team-memory-wiki-v1-copy --target-version 2
-uv run llm-wiki rebuild-retrieval --workspace /tmp/team-memory-wiki-v1-copy
-uv run llm-wiki health --workspace /tmp/team-memory-wiki-v1-copy
+uv run llm-wiki rebuild-retrieval --workspace /tmp/team-memory-wiki-v1-copy-v2
+uv run llm-wiki health --workspace /tmp/team-memory-wiki-v1-copy-v2
 ```
 
 4. Use CLI commands to verify the payloads and outputs match the spec:
 
 ```bash
-uv run llm-wiki query --workspace /tmp/team-memory-wiki-v1-copy --project hcv --project notion-sync --question "Compare project maturity."
-uv run llm-wiki approve-writeback --workspace /tmp/team-memory-wiki-v1-copy --proposal-id <captured-proposal-id>
+uv run llm-wiki query --workspace /tmp/team-memory-wiki-v1-copy-v2 --project hcv --project notion-sync --question "Compare project maturity."
+uv run llm-wiki approve-writeback --workspace /tmp/team-memory-wiki-v1-copy-v2 --proposal-id <captured-proposal-id>
 ```
 
 5. Run actual operator scenarios in a development workspace:
 
-- ingest a changed project and confirm `state/retrieval-dirty.flag` appears
-- rebuild retrieval and confirm the dirty flag clears
-- run a multi-project query and inspect citations manually
-- approve one cross-project report and verify the markdown lands under `wiki/reports/`
-- rerun `lint` and `health` after write-back
+- ingest a changed project in the original V1 workspace and confirm `state/retrieval-dirty.flag` appears
+- migrate to a sibling `-v2` workspace and confirm the original workspace stays untouched
+- rebuild retrieval in the `-v2` workspace and confirm the dirty flag clears there
+- run a multi-project query in the `-v2` workspace and inspect citations manually
+- approve one cross-project report in the `-v2` workspace and verify the markdown lands under `wiki/reports/`
+- rerun `lint` and `health` after write-back in the `-v2` workspace
 
 6. Manual verification wherever possible:
 
@@ -1627,6 +1972,9 @@ uv run llm-wiki approve-writeback --workspace /tmp/team-memory-wiki-v1-copy --pr
 - inspect `logs/query-log.md` for the recorded query event
 - inspect `state/index.db` manually with `sqlite3` to verify rows in `query_runs`, `query_evidence`, and `writeback_proposals`
 - inspect one cited snapshot chunk and confirm the line range is correct
+- verify that an approved write-back rejects conflicts on an already curated `overview.md` or `decisions.md`
+- verify that a query with no valid evidence surfaces an explicit unresolved-citation failure
+- verify that snapshot fallback is called out in the markdown output when used and absent when not needed
 
 7. Docker deployment:
 
