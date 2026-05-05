@@ -29,6 +29,20 @@ def build_parser() -> argparse.ArgumentParser:
     rebuild_indexes_parser = subparsers.add_parser("rebuild-indexes")
     rebuild_indexes_parser.add_argument("--workspace", type=Path, required=True)
 
+    rebuild_retrieval_parser = subparsers.add_parser("rebuild-retrieval")
+    rebuild_retrieval_parser.add_argument("--workspace", type=Path, required=True)
+
+    health_parser = subparsers.add_parser("health")
+    health_parser.add_argument("--workspace", type=Path, required=True)
+
+    migrate_parser = subparsers.add_parser("migrate-workspace")
+    migrate_parser.add_argument("--workspace", type=Path, required=True)
+    migrate_parser.add_argument("--target-version", type=int, required=True)
+
+    approve_writeback_parser = subparsers.add_parser("approve-writeback")
+    approve_writeback_parser.add_argument("--workspace", type=Path, required=True)
+    approve_writeback_parser.add_argument("--proposal-id", required=True)
+
     lint_parser = subparsers.add_parser("lint")
     lint_parser.add_argument("--workspace", type=Path, required=True)
     return parser
@@ -55,6 +69,8 @@ def main() -> int:
             if findings:
                 print("\n".join(findings))
             return 0
+        if args.command in {"rebuild-retrieval", "health", "migrate-workspace", "approve-writeback"}:
+            raise NotImplementedError(f"{args.command} is not implemented yet")
         raise NotImplementedError(f"{args.command} is not implemented yet")
     except (FileNotFoundError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
