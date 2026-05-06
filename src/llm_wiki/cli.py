@@ -5,9 +5,11 @@ import sys
 from pathlib import Path
 
 from llm_wiki.ingest import run_ingest
+from llm_wiki.health import run_health_checks
 from llm_wiki.init_workspace import initialize_workspace
 from llm_wiki.indexes import write_indexes
 from llm_wiki.lint import run_lint, write_lint_outputs
+from llm_wiki.migration import migrate_workspace_to_v2
 from llm_wiki.query import answer_multi_project_query, answer_project_orientation
 from llm_wiki.state_db import ensure_schema, index_db_path
 from llm_wiki.writeback import approve_writeback
@@ -86,14 +88,23 @@ def main() -> int:
             if findings:
                 print("\n".join(findings))
             return 0
+        if args.command == "health":
+            findings = run_health_checks(args.workspace)
+            if findings:
+                print("\n".join(findings))
+            return 0
+        if args.command == "migrate-workspace":
+            if args.target_version != 2:
+                raise ValueError("Only target-version 2 is supported")
+            migrated = migrate_workspace_to_v2(args.workspace)
+            print(f"Migrated workspace to {migrated}")
+            return 0
         if args.command == "approve-writeback":
             target_path = approve_writeback(args.workspace, args.proposal_id)
             print(f"Approved write-back proposal {args.proposal_id}: {target_path}")
             return 0
-        if args.command in {"health", "migrate-workspace"}:
-            raise NotImplementedError(f"{args.command} is not implemented yet")
         raise NotImplementedError(f"{args.command} is not implemented yet")
-    except (FileNotFoundError, ValueError) as exc:
+    except (FileExistsError, FileNotFoundError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
