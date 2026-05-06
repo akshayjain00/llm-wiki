@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 from llm_wiki.config import WORKSPACE_SCHEMA_VERSION
+from llm_wiki.text_extraction import IndexedChunk
 
 
 SCHEMA_STATEMENTS = (
@@ -159,5 +161,67 @@ def ensure_schema(db_path: Path) -> None:
                 (WORKSPACE_SCHEMA_VERSION, WORKSPACE_SCHEMA_VERSION),
             )
         conn.commit()
+    finally:
+        conn.close()
+
+
+def upsert_chunks(db_path: Path, chunks: list[IndexedChunk]) -> None:
+    conn = sqlite3.connect(db_path)
+    try:
+        for chunk in chunks:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO chunks (
+                    chunk_id, source_kind, page_id, file_id, project_slug, chunk_text,
+                    content_hash, line_start, line_end, token_count
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    chunk.chunk_id,
+                    chunk.source_kind,
+                    chunk.page_id,
+                    chunk.file_id,
+                    chunk.project_slug,
+                    chunk.chunk_text,
+                    chunk.content_hash,
+                    chunk.line_start,
+                    chunk.line_end,
+                    chunk.token_count,
+                ),
+            )
+            conn.execute("DELETE FROM fts_chunks WHERE chunk_id = ?", (chunk.chunk_id,))
+            conn.execute(
+                """
+                INSERT INTO fts_chunks (chunk_id, project_slug, source_kind, chunk_text)
+                VALUES (?, ?, ?, ?)
+                """,
+                (chunk.chunk_id, chunk.project_slug, chunk.source_kind, chunk.chunk_text),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def search_lexical(
+    db_path: Path, *, project_slugs: list[str], query_text: str, limit: int
+) -> list[dict[str, Any]]:
+    if not project_slugs:
+        return []
+    placeholders = ",".join("?" for _ in project_slugs)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT chunk_id, project_slug, source_kind, bm25(fts_chunks) AS lexical_score
+            FROM fts_chunks
+            WHERE fts_chunks MATCH ?
+              AND project_slug IN ({placeholders})
+            ORDER BY lexical_score
+            LIMIT ?
+            """,
+            [query_text, *project_slugs, limit],
+        ).fetchall()
+        return [dict(row) for row in rows]
     finally:
         conn.close()
