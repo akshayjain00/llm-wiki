@@ -10,6 +10,7 @@ from llm_wiki.indexes import write_indexes
 from llm_wiki.lint import run_lint, write_lint_outputs
 from llm_wiki.query import answer_multi_project_query, answer_project_orientation
 from llm_wiki.state_db import ensure_schema, index_db_path
+from llm_wiki.writeback import approve_writeback
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -85,7 +86,11 @@ def main() -> int:
             if findings:
                 print("\n".join(findings))
             return 0
-        if args.command in {"health", "migrate-workspace", "approve-writeback"}:
+        if args.command == "approve-writeback":
+            target_path = approve_writeback(args.workspace, args.proposal_id)
+            print(f"Approved write-back proposal {args.proposal_id}: {target_path}")
+            return 0
+        if args.command in {"health", "migrate-workspace"}:
             raise NotImplementedError(f"{args.command} is not implemented yet")
         raise NotImplementedError(f"{args.command} is not implemented yet")
     except (FileNotFoundError, ValueError) as exc:

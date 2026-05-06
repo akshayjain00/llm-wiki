@@ -167,6 +167,19 @@ def append_log_entry(destination: Path, entry: str) -> None:
     destination.write_text(existing + entry)
 
 
+def render_query_log_summary(*, total_queries: int, snapshot_fallbacks: int, writebacks: int) -> str:
+    return "\n".join(
+        [
+            "# Query Log Summary",
+            "",
+            f"- total queries: {total_queries}",
+            f"- snapshot fallbacks: {snapshot_fallbacks}",
+            f"- write-backs: {writebacks}",
+            "",
+        ]
+    )
+
+
 def load_project_card(card_path: Path) -> ProjectCardData:
     text = card_path.read_text()
     if not text.startswith("---\n"):

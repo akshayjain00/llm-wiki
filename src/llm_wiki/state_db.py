@@ -135,7 +135,8 @@ SCHEMA_STATEMENTS = (
         review_decision TEXT,
         review_reason TEXT,
         applied_at TEXT,
-        target_content_hash TEXT
+        target_content_hash TEXT,
+        rendered_markdown TEXT NOT NULL DEFAULT ''
     )
     """,
 )
