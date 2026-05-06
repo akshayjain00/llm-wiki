@@ -8,7 +8,7 @@ from llm_wiki.ingest import run_ingest
 from llm_wiki.init_workspace import initialize_workspace
 from llm_wiki.indexes import write_indexes
 from llm_wiki.lint import run_lint, write_lint_outputs
-from llm_wiki.query import answer_project_orientation
+from llm_wiki.query import answer_multi_project_query, answer_project_orientation
 from llm_wiki.state_db import ensure_schema, index_db_path
 
 
@@ -25,7 +25,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     query_parser = subparsers.add_parser("query")
     query_parser.add_argument("--workspace", type=Path, required=True)
-    query_parser.add_argument("--project", required=True)
+    query_parser.add_argument("--project", action="append", required=True)
+    query_parser.add_argument("--question")
 
     rebuild_indexes_parser = subparsers.add_parser("rebuild-indexes")
     rebuild_indexes_parser.add_argument("--workspace", type=Path, required=True)
@@ -68,7 +69,15 @@ def main() -> int:
                 dirty_flag.unlink()
             return 0
         if args.command == "query":
-            print(answer_project_orientation(args.workspace, args.project), end="")
+            if args.question is not None:
+                print(
+                    answer_multi_project_query(args.workspace, args.project, args.question),
+                    end="",
+                )
+                return 0
+            if len(args.project) != 1:
+                raise ValueError("Orientation query requires exactly one project when --question is omitted")
+            print(answer_project_orientation(args.workspace, args.project[0]), end="")
             return 0
         if args.command == "lint":
             findings = run_lint(args.workspace)

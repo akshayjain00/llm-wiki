@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from llm_wiki.project_id import slugify_project_name
+from llm_wiki.query_runtime import run_phase2_query
 from llm_wiki.wiki_writer import load_project_card
 
 
@@ -51,3 +52,12 @@ def answer_project_orientation(workspace_root: Path, project_slug: str) -> str:
         "Next steps:\n"
         f"{next_steps}\n"
     )
+
+
+def answer_multi_project_query(
+    workspace_root: Path, project_slugs: list[str], question: str
+) -> str:
+    if len(project_slugs) < 2 or len(project_slugs) > 5:
+        raise ValueError("Phase 2 query requires between 2 and 5 projects")
+    cards = [load_project_card(_resolve_card_path(workspace_root, project_slug)) for project_slug in project_slugs]
+    return run_phase2_query(workspace=workspace_root, project_cards=cards, question=question)
