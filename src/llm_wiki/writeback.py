@@ -24,9 +24,7 @@ def choose_writeback_target(*, project_slugs: list[str], topic_slug: str, page_t
     raise ValueError(f"unknown page type: {page_type}")
 
 
-def render_report_markdown(
-    *, title: str, question: str, answer: str, citations: list[str]
-) -> str:
+def render_report_markdown(*, title: str, question: str, answer: str, citations: list[str]) -> str:
     lines = [
         f"# {title}",
         "",
@@ -75,7 +73,9 @@ def render_decisions_markdown(
     return "\n".join(lines)
 
 
-def apply_approved_writeback(target_path: Path, rendered_markdown: str, *, allow_replace: bool) -> None:
+def apply_approved_writeback(
+    target_path: Path, rendered_markdown: str, *, allow_replace: bool
+) -> None:
     target_path.parent.mkdir(parents=True, exist_ok=True)
     if target_path.exists() and not allow_replace:
         raise ValueError("manual review required before replacing an existing durable page")

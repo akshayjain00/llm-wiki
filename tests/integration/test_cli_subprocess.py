@@ -45,6 +45,29 @@ def test_phase2_command_help_exits_zero() -> None:
         assert result.stderr == ""
 
 
+def test_readme_mentions_phase2_commands() -> None:
+    readme = Path("README.md").read_text()
+
+    assert "rebuild-retrieval" in readme
+    assert "approve-writeback" in readme
+    assert "wiki/reports/" in readme
+
+
+def test_phase2_quickstart_mentions_first_time_flow() -> None:
+    quickstart = Path("docs/guides/phase2-quickstart.md").read_text()
+
+    assert "first query" in quickstart.lower()
+    assert "migrate-workspace" in quickstart
+
+
+def test_phase2_eval_fixture_captures_query_expectations() -> None:
+    eval_fixture = Path("evals/phase2_query_cases.yaml").read_text()
+
+    assert "maturity-comparison" in eval_fixture
+    assert "expected_citation_prefixes" in eval_fixture
+    assert "expected_writeback_target" in eval_fixture
+
+
 def test_query_missing_project_exits_with_clean_error(tmp_path: Path) -> None:
     workspace = tmp_path / "workspace"
     subprocess.run(

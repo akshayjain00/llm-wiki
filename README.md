@@ -8,6 +8,8 @@ wiki-backed project orientation queries, index rebuilding, and lint checks.
 - [Getting Started](docs/guides/getting-started.md)
 - [How It Works](docs/guides/how-it-works.md)
 - [Cookbook](docs/guides/cookbook.md)
+- [Phase 2 Quickstart](docs/guides/phase2-quickstart.md)
+- [Phase 2 Migration](docs/guides/phase2-migration.md)
 - [V1 Release Notes](docs/releases/v0.1.0.md)
 
 ## Requirements
@@ -53,6 +55,20 @@ Run lint and refresh review surfaces:
 uv run llm-wiki lint --workspace /tmp/team-memory-wiki-smoke
 ```
 
+## Phase 2 Commands
+
+Phase 2 adds cross-project retrieval, health checks, side-by-side migration, and manual write-back approval:
+
+```bash
+uv run llm-wiki migrate-workspace --workspace /tmp/team-memory-wiki-smoke --target-version 2
+uv run llm-wiki rebuild-retrieval --workspace /tmp/team-memory-wiki-smoke-v2
+uv run llm-wiki health --workspace /tmp/team-memory-wiki-smoke-v2
+uv run llm-wiki query --workspace /tmp/team-memory-wiki-smoke-v2 --project hcv --project notion-sync --question "Compare how mature these projects are."
+uv run llm-wiki approve-writeback --workspace /tmp/team-memory-wiki-smoke-v2 --proposal-id <id>
+```
+
+Cross-project durable write-backs are written under `wiki/reports/`. Single-project write-backs use `wiki/projects/<slug>/overview.md` or `wiki/projects/<slug>/decisions.md`.
+
 ## Effective Usage Pattern
 
 Use the service in this order:
@@ -80,6 +96,9 @@ The verified smoke flow above produced:
 - `logs/ingest-log.md`
 - `wiki/indexes/needs-review.md` after running `lint`
 - `logs/lint-log.md`
+- `state/index.db` after running `rebuild-retrieval` or `migrate-workspace`
+- `logs/query-log.md` after Phase 2 initialization
+- `wiki/reports/<date>-<topic>.md` after approving a cross-project write-back
 
 The verified query output included:
 

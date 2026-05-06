@@ -42,7 +42,9 @@ def test_choose_writeback_target_rejects_invalid_page_project_combinations() -> 
     with pytest.raises(ValueError, match="at least two projects"):
         choose_writeback_target(project_slugs=["hcv"], topic_slug="bad-report", page_type="report")
     with pytest.raises(ValueError, match="unknown page type"):
-        choose_writeback_target(project_slugs=["hcv"], topic_slug="bad-route", page_type="unexpected")
+        choose_writeback_target(
+            project_slugs=["hcv"], topic_slug="bad-route", page_type="unexpected"
+        )
 
 
 def test_apply_writeback_refuses_to_overwrite_manual_overview(tmp_path: Path) -> None:

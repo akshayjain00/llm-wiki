@@ -26,8 +26,7 @@ def fuse_ranked_results(
         merged[chunk_id]["semantic_score"] = float(row["semantic_score"])
 
     for value in merged.values():
-        value["fused_score"] = (
-            lexical_weight * float(value["lexical_score"])
-            + semantic_weight * float(value["semantic_score"])
-        )
+        value["fused_score"] = lexical_weight * float(
+            value["lexical_score"]
+        ) + semantic_weight * float(value["semantic_score"])
     return sorted(merged.values(), key=lambda row: float(row["fused_score"]))

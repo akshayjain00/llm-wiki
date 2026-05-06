@@ -167,7 +167,9 @@ def append_log_entry(destination: Path, entry: str) -> None:
     destination.write_text(existing + entry)
 
 
-def render_query_log_summary(*, total_queries: int, snapshot_fallbacks: int, writebacks: int) -> str:
+def render_query_log_summary(
+    *, total_queries: int, snapshot_fallbacks: int, writebacks: int
+) -> str:
     return "\n".join(
         [
             "# Query Log Summary",

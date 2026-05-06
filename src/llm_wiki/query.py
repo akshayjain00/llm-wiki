@@ -59,5 +59,8 @@ def answer_multi_project_query(
 ) -> str:
     if len(project_slugs) < 2 or len(project_slugs) > 5:
         raise ValueError("Phase 2 query requires between 2 and 5 projects")
-    cards = [load_project_card(_resolve_card_path(workspace_root, project_slug)) for project_slug in project_slugs]
+    cards = [
+        load_project_card(_resolve_card_path(workspace_root, project_slug))
+        for project_slug in project_slugs
+    ]
     return run_phase2_query(workspace=workspace_root, project_cards=cards, question=question)

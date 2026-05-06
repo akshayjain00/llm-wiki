@@ -79,7 +79,9 @@ def main() -> int:
                 )
                 return 0
             if len(args.project) != 1:
-                raise ValueError("Orientation query requires exactly one project when --question is omitted")
+                raise ValueError(
+                    "Orientation query requires exactly one project when --question is omitted"
+                )
             print(answer_project_orientation(args.workspace, args.project[0]), end="")
             return 0
         if args.command == "lint":
