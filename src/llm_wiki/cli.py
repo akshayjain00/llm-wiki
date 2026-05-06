@@ -11,7 +11,7 @@ from llm_wiki.indexes import write_indexes
 from llm_wiki.lint import run_lint, write_lint_outputs
 from llm_wiki.migration import migrate_workspace_to_v2
 from llm_wiki.query import answer_multi_project_query, answer_project_orientation
-from llm_wiki.state_db import ensure_schema, index_db_path
+from llm_wiki.retrieval_index import rebuild_retrieval_index
 from llm_wiki.writeback import approve_writeback
 
 
@@ -66,7 +66,7 @@ def main() -> int:
             write_indexes(args.workspace)
             return 0
         if args.command == "rebuild-retrieval":
-            ensure_schema(index_db_path(args.workspace))
+            rebuild_retrieval_index(args.workspace)
             dirty_flag = args.workspace / "state" / "retrieval-dirty.flag"
             if dirty_flag.exists():
                 dirty_flag.unlink()
