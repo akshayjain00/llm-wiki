@@ -1,0 +1,24 @@
+cases:
+  - id: maturity-comparison
+    projects:
+      - hcv
+      - notion-sync
+    question: Compare how mature these projects are.
+    expected_citation_prefixes:
+      - "[wiki:"
+      - "[snapshot:"
+    expected_writeback_target: wiki/reports/
+  - id: single-project-overview
+    projects:
+      - hcv
+    question: Summarize this project for a new contributor.
+    expected_citation_prefixes:
+      - "[wiki:"
+    expected_writeback_target: wiki/projects/hcv/overview.md
+  - id: decision-rationale
+    projects:
+      - data-catalog-mcp
+    question: What decision should be preserved for future implementation work?
+    expected_citation_prefixes:
+      - "[wiki:"
+    expected_writeback_target: wiki/projects/data-catalog-mcp/decisions.md

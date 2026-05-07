@@ -81,6 +81,18 @@ def test_run_lint_flags_duplicate_slugs(tmp_path: Path) -> None:
     assert any("duplicate slug" in finding.lower() for finding in findings)
 
 
+def test_run_lint_flags_uncited_generated_project_pages(tmp_path: Path) -> None:
+    project_dir = tmp_path / "wiki" / "projects" / "demo"
+    _write_project_card(project_dir, owner="Data Team", status="active")
+    (project_dir / "overview.md").write_text("# Demo Overview\n\nUseful synthesis.\n")
+    (project_dir / "decisions.md").write_text("# Demo Decisions\n\nUseful decisions.\n")
+
+    findings = run_lint(tmp_path, now_timestamp="2026-04-20T10:00:00Z")
+
+    assert any("overview missing citations" in finding.lower() for finding in findings)
+    assert any("decisions missing citations" in finding.lower() for finding in findings)
+
+
 def test_render_needs_review_markdown_is_bullet_list() -> None:
     rendered = render_needs_review_markdown(["demo: unknown owner", "demo: unknown status"])
 

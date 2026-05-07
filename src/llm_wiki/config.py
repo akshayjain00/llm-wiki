@@ -14,6 +14,8 @@ DEFAULT_BLOCKED_PARTS = frozenset(
 DEFAULT_BLOCKED_SUFFIXES = frozenset({".zip", ".jar", ".pt", ".p8", ".pyc"})
 DEFAULT_BLOCKED_PREFIXES = (".env",)
 
+WORKSPACE_SCHEMA_VERSION = 2
+
 
 @dataclass(frozen=True)
 class SourceRules:
@@ -32,6 +34,8 @@ class WorkspacePaths:
     wiki: Path = field(init=False)
     logs: Path = field(init=False)
     schema: Path = field(init=False)
+    state: Path = field(init=False)
+    cache: Path = field(init=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "raw", self.root / "raw")
@@ -39,3 +43,5 @@ class WorkspacePaths:
         object.__setattr__(self, "wiki", self.root / "wiki")
         object.__setattr__(self, "logs", self.root / "logs")
         object.__setattr__(self, "schema", self.root / "schema")
+        object.__setattr__(self, "state", self.root / "state")
+        object.__setattr__(self, "cache", self.root / "cache")

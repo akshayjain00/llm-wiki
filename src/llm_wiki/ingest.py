@@ -161,6 +161,8 @@ def run_ingest(workspace: Path, target: Path, ingest_timestamp: str | None = Non
     write_project_card(project_card, project_card_path)
 
     write_indexes(workspace)
+    (workspace / "state").mkdir(parents=True, exist_ok=True)
+    (workspace / "state" / "retrieval-dirty.flag").write_text("dirty\n")
 
     timestamp_label = datetime.strptime(timestamp, "%Y-%m-%dT%H-%M-%SZ").strftime(
         "%Y-%m-%d %H:%M UTC"

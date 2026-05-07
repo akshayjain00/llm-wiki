@@ -1,6 +1,30 @@
 from pathlib import Path
+import sqlite3
 
-from llm_wiki.query import answer_project_orientation
+import pytest
+
+from llm_wiki.models import ProjectCardData
+from llm_wiki.query import answer_multi_project_query, answer_project_orientation
+from llm_wiki.wiki_writer import write_project_card
+
+
+def _write_card(workspace: Path, slug: str, summary: str) -> None:
+    write_project_card(
+        ProjectCardData(
+            project_name=slug.replace("-", " ").title(),
+            slug=slug,
+            aliases=[],
+            owner="Data Team",
+            owner_confidence="medium",
+            status="active",
+            status_confidence="medium",
+            last_ingested="2026-05-05T00-00-00Z",
+            canonical_snapshot=f"raw/demo/{slug}/2026-05-05T00-00-00Z",
+            summary=summary,
+            next_steps=["Keep curating evidence."],
+        ),
+        workspace / "wiki" / "projects" / slug / "project-card.md",
+    )
 
 
 def test_answer_project_orientation_reads_project_card_and_snapshot_metadata(
@@ -85,3 +109,37 @@ def test_answer_project_orientation_resolves_alias_lookup(tmp_path: Path) -> Non
 
     assert "Project: Demo" in answer
     assert "Slug: demo" in answer
+
+
+def test_answer_multi_project_query_returns_citations_and_persists_audit_rows(
+    tmp_path: Path,
+) -> None:
+    _write_card(tmp_path, "hcv", "HCV is mature and reviewed.")
+    _write_card(tmp_path, "notion-sync", "Notion sync is active and still evolving.")
+
+    answer = answer_multi_project_query(
+        tmp_path,
+        ["hcv", "notion-sync"],
+        "Compare how mature these projects are.",
+    )
+
+    assert "Answer:" in answer
+    assert "Citations:" in answer
+    assert "[wiki:" in answer
+    assert "snapshot fallback" in answer.lower()
+
+    conn = sqlite3.connect(tmp_path / "state" / "index.db")
+    try:
+        assert conn.execute("SELECT COUNT(*) FROM query_runs").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM query_evidence").fetchone()[0] == 2
+    finally:
+        conn.close()
+    query_log = (tmp_path / "logs" / "query-log.md").read_text()
+    assert "Compare how mature these projects are." in query_log
+
+
+def test_answer_multi_project_query_rejects_invalid_project_counts(tmp_path: Path) -> None:
+    _write_card(tmp_path, "hcv", "HCV summary.")
+
+    with pytest.raises(ValueError, match="between 2 and 5 projects"):
+        answer_multi_project_query(tmp_path, ["hcv"], "Compare maturity.")

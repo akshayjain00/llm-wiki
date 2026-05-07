@@ -64,6 +64,12 @@ def run_lint(workspace_root: Path, now_timestamp: str | None = None) -> list[str
             findings.append(
                 f"{card.slug}: contradictory status across project pages ({', '.join(sorted(discovered_statuses))})"
             )
+        overview_path = project_dir / "overview.md"
+        decisions_path = project_dir / "decisions.md"
+        if overview_path.exists() and "## Citations" not in overview_path.read_text():
+            findings.append(f"{card.slug}: overview missing citations")
+        if decisions_path.exists() and "## Citations" not in decisions_path.read_text():
+            findings.append(f"{card.slug}: decisions missing citations")
         index_path = workspace_root / "wiki" / "indexes" / "index.md"
         if index_path.exists():
             expected_ref = str(card_path.relative_to(workspace_root))

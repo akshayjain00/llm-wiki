@@ -109,3 +109,18 @@ def test_run_ingest_preserves_reviewed_canonical_identity(tmp_path: Path) -> Non
     assert merged_card.project_name == "Curated Identity"
     assert merged_card.aliases == ["Legacy Identity"]
     assert merged_card.summary == "Human-reviewed summary."
+
+
+def test_run_ingest_marks_retrieval_state_dirty(tmp_path: Path) -> None:
+    workspace = tmp_path / "workspace"
+    initialize_workspace(workspace)
+
+    target = tmp_path / "demo_project"
+    docs = target / "docs"
+    docs.mkdir(parents=True)
+    (target / "README.md").write_text("# Demo Project\n\nOwner: Data Team\nStatus: Active\n")
+    (docs / "plan.md").write_text("Next steps: ship guided ingest")
+
+    run_ingest(workspace, target, ingest_timestamp="2026-04-20T10-00-00Z")
+
+    assert (workspace / "state" / "retrieval-dirty.flag").read_text() == "dirty\n"
