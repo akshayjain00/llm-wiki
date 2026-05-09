@@ -12,6 +12,8 @@ dependencies = [
     "openai>=1.78.0",
     "pypdf>=5.5.0",
     "PyYAML>=6.0",
+    "mcp[cli]>=1.0.0",
+    "markdown-it-py>=3.0.0",
 ]
 
 [project.scripts]

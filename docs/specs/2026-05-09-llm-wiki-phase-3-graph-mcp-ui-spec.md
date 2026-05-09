@@ -79,6 +79,13 @@ Add a deterministic graph layer, read-only MCP server, proposed cross-link edit 
 
 ## Current Implementation Realities
 
+### Session-Memory Learning
+
+When a workflow tool creates only an empty session shell, that is not useful memory capture. A session artifact needs a real dossier: source session metadata, actions taken, linked tasks, observed defects, and carry-forward fixes. Otherwise the output is only a container, not a knowledge asset.
+
+The interface should stay source-agnostic: `import-session --session-id <id>` should work for both Codex and Claude Code sessions, and `close-session` should be the generic way to finalize and summarize the captured session.
+
+
 The Phase 3 design must account for the current Phase 2 implementation:
 
 - `state_db.py` is the schema source of truth and uses idempotent `CREATE TABLE IF NOT EXISTS`.

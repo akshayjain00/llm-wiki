@@ -32,6 +32,32 @@ The detailed task sections below are preserved as the execution record. Another 
 - query verifies evidence locations but does not re-summarize snapshot text on demand
 - alias extraction is still heuristic and may need manual curation for broad multi-domain repos
 
+### Strategic Checkpoint — 2026-05-03
+
+This checkpoint captures the post-V1 manual curation work completed in the durable workspace at `/Users/akshay.jain/Desktop/AI_V2/team_memory_wiki`.
+
+- review queue status: `wiki/indexes/needs-review.md` currently reads `No findings.`
+- manually curated project cards:
+  - `data-catalog-mcp` -> owner `Akshay Jain`, status `blocked`, benchmark/quota failure captured as the primary blocker
+  - `img-indexing` -> owner `Akshay Jain`, status `completed`, preserved as a personal reference project
+  - `notion-sync` -> owner `Akshay Jain`, status `active`, with explicit limitations and follow-up questions
+  - `slotblocking` -> corrected from stale `PTL` live-path metadata to the current `PNM` source location; card/domain/owner now reflect the Packers and Movers slice
+- verification already run against the durable workspace:
+  - `uv run llm-wiki rebuild-indexes --workspace /Users/akshay.jain/Desktop/AI_V2/team_memory_wiki`
+  - `uv run llm-wiki lint --workspace /Users/akshay.jain/Desktop/AI_V2/team_memory_wiki`
+  - `uv run llm-wiki query --workspace /Users/akshay.jain/Desktop/AI_V2/team_memory_wiki --project <slug>` for the curated projects
+- durable workspace outcome:
+  - regenerated `index.md`, `active-projects.md`, and `by-domain.md` reflect the curated states
+  - `slotblocking` is now classified under `pnm slot blocking and surge decisioning`
+  - the raw evidence snapshot for `slotblocking` still lives under `raw/ptl/...` because that is historical ingest output; only the maintained ref/card layer was corrected
+
+Recommended next moves if work resumes:
+
+- re-ingest `slotblocking` from the current PNM source paths if you want the raw evidence layer to match the corrected maintained metadata
+- decide whether `data-catalog-mcp` should remain a local PoC artifact or be promoted into a maintained internal MCP surface
+- ingest the actual implementation files for `notion-sync` if the workspace should capture more than its documentation shell
+- consider adding an explicit checkpoint or session-log command to `llm-wiki` if this manual curation pattern becomes routine
+
 ---
 
 ## Decision Log
@@ -1159,3 +1185,53 @@ Document the verified commands and output locations in `README.md`.
 git add README.md docs/specs/2026-04-09-team-memory-wiki-design.md
 git commit -m "docs: add usage and verification notes"
 ```
+
+---
+
+## Post-Launch Field Iteration Notes
+
+### Iteration 5 — `PTL/observability`
+
+- A folder with `README.md`, `QUICKSTART.md`, and `IMPLEMENTATION_SUMMARY.md` is a strong target, but quickstart text can still overwhelm `next_steps` unless operator steps are rewritten into project-level follow-up actions.
+- Overview priority worked as intended once the curated card was applied: canonical identity stayed tied to the observability toolkit rather than the implementation-summary filename.
+- Current practice should treat script-heavy analytics folders as `active` only after manual confirmation of the owning ops or analytics team.
+
+### Iteration 6 — `ai-marketplace-community`
+
+- Community/platform repositories infer identity well when the README is strong, but ownership and governance still require explicit human normalization.
+- Plugin catalogs need curated aliases, otherwise inferred aliases tend to drift toward plugin names instead of the marketplace identity.
+- For marketplace-style repos, good `next_steps` are stewardship actions rather than implementation tasks: curation, validation discipline, and discoverability management.
+
+### Iteration 7 — `PTL/SlotBlocking`
+
+- Single-document concept slices are viable, but they are the most fragile target type for identity extraction because timestamps, placeholders, or version markers can dominate the first-pass title.
+- The manual card should explicitly distinguish concept/design slices from implemented systems, otherwise downstream readers may over-assume operational maturity.
+- For design-doc targets, the best curated `next_steps` are validation and adoption questions, not code tasks.
+
+### Updated Targeting Rule
+
+The current target-ordering heuristic should now be:
+
+1. focused narrative bundle with clear charter/rollout docs
+2. repo or folder with strong README plus one architecture/implementation summary
+3. marketplace/platform repo with clear governance docs
+4. single-design-doc slice when the concept itself is important enough to track
+5. broad multi-domain repo only when narrower slices are not available
+
+### Updated Curation Rule
+
+For each new slice, default to this loop:
+
+1. ingest the narrowest viable folder
+2. query the generated slug
+3. lint immediately
+4. inspect the top 1 to 3 evidence docs used for identity
+5. manually normalize `project_name`, `aliases`, `owner`, `status`, `summary`, and `next_steps`
+6. rebuild indexes
+7. rerun lint and confirm `needs-review.md`
+
+### Follow-On Product Improvements Suggested By Field Use
+
+- Add better handling for single-document concept slices where the first H1 is noisy or version-stamped.
+- Add optional `project_type` classification to distinguish concept, toolkit, platform, and program slices.
+- Add a future evidence-priority report so operators can see which files drove inferred identity before manual curation.

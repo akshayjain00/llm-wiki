@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from llm_wiki.config import WORKSPACE_SCHEMA_VERSION
+from llm_wiki.graph_schema import GRAPH_SCHEMA_STATEMENTS
 from llm_wiki.text_extraction import IndexedChunk
 
 
@@ -152,6 +153,9 @@ def ensure_schema(db_path: Path) -> None:
     try:
         for statement in SCHEMA_STATEMENTS:
             conn.execute(statement)
+        # Phase 3 graph tables — idempotent, safe to apply to existing DBs
+        for statement in GRAPH_SCHEMA_STATEMENTS:
+            conn.execute(statement)
         if conn.execute("SELECT COUNT(*) FROM workspace_meta").fetchone()[0] == 0:
             conn.execute(
                 """
@@ -161,6 +165,18 @@ def ensure_schema(db_path: Path) -> None:
                 """,
                 (WORKSPACE_SCHEMA_VERSION, WORKSPACE_SCHEMA_VERSION),
             )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def ensure_graph_schema(db_path: Path) -> None:
+    """Apply only the graph tables — for callers that may not have run ensure_schema yet."""
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path)
+    try:
+        for statement in GRAPH_SCHEMA_STATEMENTS:
+            conn.execute(statement)
         conn.commit()
     finally:
         conn.close()
