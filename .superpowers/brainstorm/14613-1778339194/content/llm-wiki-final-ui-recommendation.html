@@ -1,0 +1,66 @@
+<h2>Recommended Interface For LLM Wiki</h2>
+<p class="subtitle">Research synthesis: combine Obsidian-style graph navigation, Dendron-style backlinks/candidate links, Mem-style command search, and an analysis-first graph panel.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Final Output Target: Local Read-Only Wiki Graph Browser</div>
+  <div class="mockup-body">
+    <div class="mock-nav">LLM Wiki · ⌘K Search · Graph Health: Fresh · 17 Proposed Links · MCP: Ready</div>
+    <div style="display:grid;grid-template-columns:230px 1fr 320px;gap:14px;margin-top:14px;min-height:520px">
+      <div class="mock-sidebar">
+        <strong>Workspace</strong><br><br>
+        Overview<br>
+        Projects<br>
+        Entities<br>
+        Decisions<br>
+        Reports<br>
+        Proposed Links<br>
+        Health<br><br>
+        <strong>Filters</strong><br><br>
+        Projects<br>
+        Entity Type<br>
+        Edge Type<br>
+        Pending Links
+      </div>
+      <div class="mock-content">
+        <div class="placeholder"><strong>Search</strong> — “data catalog MCP owner”</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div class="placeholder">42 pages</div>
+          <div class="placeholder">118 entities</div>
+          <div class="placeholder">284 edges</div>
+          <div class="placeholder">17 proposals</div>
+        </div>
+        <div class="placeholder" style="height:220px">
+          <strong>Local Graph Neighborhood</strong><br><br>
+          Center node: data-catalog-mcp<br>
+          Shows 1-hop links, mentions, backlinks, candidate links.<br>
+          Default is neighborhood view, not whole-universe hairball.
+        </div>
+        <div class="placeholder">
+          <strong>Accessible Adjacency List</strong><br>
+          HCV → mentioned by Notion Sync · Data Catalog MCP → links to HCV · Image Indexing → candidate link to Notion Sync
+        </div>
+      </div>
+      <div class="mock-sidebar">
+        <strong>Selected: data-catalog-mcp</strong><br><br>
+        Type: Project<br>
+        Status: Active<br>
+        Owner: Data Team<br><br>
+        <strong>Backlinks</strong><br>
+        HCV overview<br>
+        Notion sync decisions<br><br>
+        <strong>Proposed Links</strong><br>
+        3 pending<br>
+        confidence 0.94+<br><br>
+        <strong>Actions</strong><br>
+        Open page<br>
+        Copy MCP URI<br>
+        View citations
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Primary Design Rule</h3>
+  <p>The graph is an investigation aid, not the whole product. The useful product is search + page preview + backlinks + proposed links, with graph neighborhood as a visual accelerator.</p>
+</div>

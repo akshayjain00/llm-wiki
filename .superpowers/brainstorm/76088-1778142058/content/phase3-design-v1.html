@@ -1,0 +1,58 @@
+<h2>Phase 3 Design: Graph Core Before UI</h2>
+<p class="subtitle">Open at http://localhost:51230. This is the proposed first slice before frontend implementation.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Runtime and Data Flow</div>
+  <div class="mockup-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+      <div class="placeholder">
+        <strong>Wiki Markdown</strong><br>
+        project-card.md<br>
+        overview.md<br>
+        decisions.md<br>
+        reports/*.md
+      </div>
+      <div class="placeholder">
+        <strong>Graph Rebuild</strong><br>
+        parse pages<br>
+        deterministic entities<br>
+        backlinks<br>
+        missing-link proposals
+      </div>
+      <div class="placeholder">
+        <strong>state/index.db</strong><br>
+        graph_nodes<br>
+        graph_edges<br>
+        entity_aliases<br>
+        proposed_edits
+      </div>
+      <div class="placeholder">
+        <strong>Consumers</strong><br>
+        CLI graph commands<br>
+        MCP read tools<br>
+        later local UI
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Allowed In First Slice</div>
+    <div class="mockup-body">
+      <div class="placeholder">Read wiki pages and derived DB</div>
+      <div class="placeholder">Create proposed cross-link edits</div>
+      <div class="placeholder">List graph/backlinks/entities via CLI and MCP</div>
+      <div class="placeholder">Keep markdown mutations behind existing approval patterns</div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">Deferred</div>
+    <div class="mockup-body">
+      <div class="placeholder">Automatic markdown rewrites</div>
+      <div class="placeholder">AI entity enrichment</div>
+      <div class="placeholder">MCP approval/write tools</div>
+      <div class="placeholder">Full frontend implementation</div>
+    </div>
+  </div>
+</div>
