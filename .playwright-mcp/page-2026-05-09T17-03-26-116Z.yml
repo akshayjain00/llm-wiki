@@ -1,0 +1,270 @@
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: w
+        - generic [ref=e8]: llm-wiki
+        - generic [ref=e9]: · ~/AI_V2/team_memory_wiki
+      - button "Open search palette (Cmd+K)" [ref=e10]:
+        - img [ref=e11]
+        - generic [ref=e14]: Search pages, entities, proposals…
+        - generic [ref=e15]: ⌘K
+      - generic [ref=e16]:
+        - generic [ref=e17]: "graph: fresh · 05-09"
+        - generic [ref=e19]: 0 pending
+        - generic [ref=e21]: "mcp: ready · stdio"
+    - navigation "Workspace" [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]: Workspace
+        - link "Overview" [ref=e26]:
+          - img [ref=e27]
+          - generic [ref=e32]: Overview
+        - link "Pages" [ref=e33]:
+          - img [ref=e34]
+          - generic [ref=e37]: Pages
+        - link "Entities" [ref=e38]:
+          - img [ref=e39]
+          - generic [ref=e42]: Entities
+        - link "Proposed Links 0" [ref=e43]:
+          - img [ref=e44]
+          - generic [ref=e46]: Proposed Links
+          - generic [ref=e47]: "0"
+        - link "Graph" [ref=e48]:
+          - img [ref=e49]
+          - generic [ref=e51]: Graph
+        - link "Reports" [ref=e52]:
+          - img [ref=e53]
+          - generic [ref=e55]: Reports
+        - link "Health" [ref=e56]:
+          - img [ref=e57]
+          - generic [ref=e59]: Health
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - text: Projects
+          - generic [ref=e62]: "4"
+        - link "Porter Community AI Plugins 1" [ref=e63]:
+          - generic [ref=e65]: Porter Community AI Plugins
+          - generic [ref=e66]: "1"
+        - link "PTL Batching Engine - Observability Tools 1" [ref=e67]:
+          - generic [ref=e69]: PTL Batching Engine - Observability Tools
+          - generic [ref=e70]: "1"
+        - 'link "Analytics Data Outcomes: Onboarding 2.0 (R1–R12) 1" [ref=e71]':
+          - generic [ref=e73]: "Analytics Data Outcomes: Onboarding 2.0 (R1–R12)"
+          - generic [ref=e74]: "1"
+        - link "ViData 1" [ref=e75]:
+          - generic [ref=e77]: ViData
+          - generic [ref=e78]: "1"
+        - generic [ref=e80]: Show all…
+      - generic [ref=e81]:
+        - generic [ref=e82]: Entity Type
+        - generic [ref=e83]:
+          - checkbox "projects 4" [checked] [ref=e84]
+          - generic [ref=e86]: projects
+          - generic [ref=e87]: "4"
+        - generic [ref=e88]:
+          - checkbox "persons 0" [checked] [ref=e89]
+          - generic [ref=e91]: persons
+          - generic [ref=e92]: "0"
+        - generic [ref=e93]:
+          - checkbox "concepts 0" [checked] [ref=e94]
+          - generic [ref=e96]: concepts
+          - generic [ref=e97]: "0"
+      - generic [ref=e98]:
+        - generic [ref=e99]: Edge Type
+        - generic [ref=e100]:
+          - checkbox "links_to" [checked] [ref=e101]
+          - generic [ref=e103]: links_to
+        - generic [ref=e104]:
+          - checkbox "mentions" [checked] [ref=e105]
+          - generic [ref=e107]: mentions
+        - generic [ref=e108]:
+          - checkbox "belongs_to" [checked] [ref=e109]
+          - generic [ref=e111]: belongs_to
+    - main [ref=e112]:
+      - generic [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e115]: ~/AI_V2/team_memory_wiki · phase-3 · graph
+          - heading "Workspace" [level=1] [ref=e116]
+          - generic [ref=e117]: Local read-only browser over the durable wiki graph. Search, inspect backlinks, review proposed cross-links — never mutates markdown.
+        - generic [ref=e118]:
+          - button "rebuild" [ref=e119]:
+            - img [ref=e120]
+            - text: rebuild
+          - button "open graph" [ref=e125]:
+            - img [ref=e126]
+            - text: open graph
+      - generic [ref=e128]:
+        - generic [ref=e129]:
+          - generic [ref=e130]: Pages
+          - generic [ref=e131]: "15"
+          - generic [ref=e132]:
+            - generic [ref=e133]: ▲
+            - text: +3 today
+          - img [ref=e134]
+        - generic [ref=e136]:
+          - generic [ref=e137]: Entities
+          - generic [ref=e138]: "4"
+          - generic [ref=e139]:
+            - generic [ref=e140]: ▲
+            - text: +5 this week
+          - img [ref=e141]
+        - generic [ref=e143]:
+          - generic [ref=e144]: Edges
+          - generic [ref=e145]: "10"
+          - generic [ref=e146]:
+            - generic [ref=e147]: ▲
+            - text: +22 this week
+          - img [ref=e148]
+        - generic [ref=e150]:
+          - generic [ref=e151]: Pending Links
+          - generic [ref=e152]: "0"
+          - generic [ref=e153]:
+            - generic [ref=e154]: →
+            - text: 4 new
+          - img [ref=e155]
+      - generic [ref=e157]:
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - heading "Projects" [level=2] [ref=e160]
+            - generic [ref=e161]: 4 · sorted by last update
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - generic: Project
+              - generic: Owner
+              - generic [ref=e164]: Phase
+              - generic [ref=e165]: Pages
+              - generic [ref=e166]: Updated
+            - generic [ref=e167]:
+              - generic:
+                - generic: Porter Community AI Plugins
+                - generic [ref=e169]: ai-marketplace-community
+              - generic: Porter Community Maintainers
+              - generic [ref=e171]: active
+              - generic [ref=e172]: "1"
+              - generic [ref=e173]: 04-25
+            - generic [ref=e174]:
+              - generic:
+                - generic: PTL Batching Engine - Observability Tools
+                - generic [ref=e176]: observability
+              - generic: PTL Ops Analytics
+              - generic [ref=e178]: active
+              - generic [ref=e179]: "1"
+              - generic [ref=e180]: 04-25
+            - generic [ref=e181]:
+              - generic:
+                - generic: "Analytics Data Outcomes: Onboarding 2.0 (R1–R12)"
+                - generic [ref=e183]: onboarding-charter
+              - generic: Data Lead - Onboarding
+              - generic [ref=e185]: active
+              - generic [ref=e186]: "1"
+              - generic [ref=e187]: 04-19
+            - generic [ref=e188]:
+              - generic:
+                - generic: ViData
+                - generic [ref=e190]: vidata
+              - generic: Porter Data Platform Tooling
+              - generic [ref=e192]: active
+              - generic [ref=e193]: "1"
+              - generic [ref=e194]: 04-19
+          - generic [ref=e195]: Showing 8 of 4 · click a row to inspect
+        - generic [ref=e196]:
+          - generic [ref=e197]:
+            - heading "Recent Activity" [level=2] [ref=e198]
+            - generic [ref=e199]: last 24h
+          - generic [ref=e200]:
+            - generic [ref=e201]:
+              - generic [ref=e202]: 2026-05-09
+              - generic [ref=e203]: "Updated: Slot Block Recommendation Model 2.0"
+            - generic [ref=e204]:
+              - generic [ref=e205]: 2026-05-09
+              - generic [ref=e206]: "Updated: MBR Brain"
+            - generic [ref=e207]:
+              - generic [ref=e208]: 2026-05-09
+              - generic [ref=e209]: "Updated: Image Knowledge Graph"
+            - generic [ref=e210]:
+              - generic [ref=e211]: 2026-05-09
+              - generic [ref=e212]: "Updated: Data Catalog MCP PoC"
+            - generic [ref=e213]:
+              - generic [ref=e214]: 2026-05-09
+              - generic [ref=e215]: "Updated: Notion to Markdown Sync Tool"
+            - generic [ref=e216]:
+              - generic [ref=e217]: 2026-05-09
+              - generic [ref=e218]: "Updated: Spot Orders on Tray (HCV)"
+            - generic [ref=e219]:
+              - generic [ref=e220]: 2026-04-29
+              - generic [ref=e221]: "Updated: Needs Review"
+            - generic [ref=e222]:
+              - generic [ref=e223]: 2026-04-29
+              - generic [ref=e224]: "Updated: Projects By Domain"
+            - generic [ref=e225]:
+              - generic [ref=e226]: 2026-04-29
+              - generic [ref=e227]: "Updated: Project Index"
+            - generic [ref=e228]:
+              - generic [ref=e229]: 2026-04-29
+              - generic [ref=e230]: "Updated: Project Index"
+      - generic [ref=e231]:
+        - generic [ref=e232]:
+          - generic [ref=e233]:
+            - heading "Top Entities" [level=2] [ref=e234]
+            - generic [ref=e235]: by backlinks
+          - generic [ref=e236]:
+            - generic [ref=e237]:
+              - generic [ref=e238]: p
+              - generic [ref=e239]: Porter Community AI Plugins
+              - generic [ref=e240]: 0 bl
+              - generic [ref=e241]: 3 a
+            - generic [ref=e242]:
+              - generic [ref=e243]: p
+              - generic [ref=e244]: PTL Batching Engine - Observability Tools
+              - generic [ref=e245]: 0 bl
+              - generic [ref=e246]: 3 a
+            - generic [ref=e247]:
+              - generic [ref=e248]: p
+              - generic [ref=e249]: "Analytics Data Outcomes: Onboarding 2.0 (R1–R12)"
+              - generic [ref=e250]: 0 bl
+              - generic [ref=e251]: 3 a
+            - generic [ref=e252]:
+              - generic [ref=e253]: p
+              - generic [ref=e254]: ViData
+              - generic [ref=e255]: 0 bl
+              - generic [ref=e256]: 3 a
+        - generic [ref=e258]:
+          - heading "High-Confidence Proposals" [level=2] [ref=e259]
+          - generic [ref=e260]: ≥ 0.94
+    - complementary "Context" [ref=e261]:
+      - generic [ref=e262]:
+        - generic [ref=e263]:
+          - heading "MCP" [level=3] [ref=e264]
+          - generic [ref=e265]: stdio
+        - generic [ref=e266]:
+          - term [ref=e267]: Status
+          - definition [ref=e268]: ● ready
+          - term [ref=e269]: Tools
+          - definition [ref=e270]: 6 read-only
+          - term [ref=e271]: Clients
+          - definition [ref=e272]: claude-code · codex
+          - term [ref=e273]: Schema
+          - definition [ref=e274]: v1.3
+      - generic [ref=e275]:
+        - heading "Recent Activity" [level=3] [ref=e277]
+        - generic [ref=e278]:
+          - generic [ref=e279]:
+            - generic [ref=e280]: 2026-05-09
+            - generic [ref=e281]: "Updated: Slot Block Recommendation Model 2.0"
+          - generic [ref=e282]:
+            - generic [ref=e283]: 2026-05-09
+            - generic [ref=e284]: "Updated: MBR Brain"
+          - generic [ref=e285]:
+            - generic [ref=e286]: 2026-05-09
+            - generic [ref=e287]: "Updated: Image Knowledge Graph"
+          - generic [ref=e288]:
+            - generic [ref=e289]: 2026-05-09
+            - generic [ref=e290]: "Updated: Data Catalog MCP PoC"
+          - generic [ref=e291]:
+            - generic [ref=e292]: 2026-05-09
+            - generic [ref=e293]: "Updated: Notion to Markdown Sync Tool"
+          - generic [ref=e294]:
+            - generic [ref=e295]: 2026-05-09
+            - generic [ref=e296]: "Updated: Spot Orders on Tray (HCV)"
