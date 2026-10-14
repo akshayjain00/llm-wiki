@@ -1,0 +1,49 @@
+<h2>Phase 3 UI Slice + Separate Verification Plan</h2>
+<p class="subtitle">UI implementation stays distinct from graph/MCP core. The interface reads graph state; it does not mutate markdown.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Clean Frontend Layout</div>
+    <div class="mockup-body">
+      <div class="mock-nav">LLM Wiki · Graph · Pages · Entities · Proposed Links · Health</div>
+      <div style="display:grid;grid-template-columns:220px 1fr 280px;gap:14px;margin-top:14px">
+        <div class="mock-sidebar">
+          <strong>Workspace</strong><br><br>
+          Overview<br>
+          Projects<br>
+          Entities<br>
+          Reports<br>
+          Proposed Edits
+        </div>
+        <div class="mock-content">
+          <div class="placeholder"><strong>Search wiki, entities, backlinks</strong></div>
+          <div class="placeholder">Graph summary: 42 pages · 118 entities · 284 edges · 16 pending proposals</div>
+          <div class="placeholder">Selected page preview with citations and outbound links</div>
+          <div class="placeholder">Accessible adjacency list as graph alternative</div>
+        </div>
+        <div class="mock-sidebar">
+          <strong>Context Panel</strong><br><br>
+          Backlinks<br>
+          Mentioned entities<br>
+          Related pages<br>
+          Proposed links
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Verification Lane</div>
+    <div class="mockup-body">
+      <div class="placeholder"><strong>Core tests</strong><br>graph rebuild, entity resolution, proposals</div>
+      <div class="placeholder"><strong>MCP tests</strong><br>tool contracts, read-only guarantees</div>
+      <div class="placeholder"><strong>UI tests</strong><br>serve command, routes, keyboard navigation</div>
+      <div class="placeholder"><strong>Manual checks</strong><br>real workspace, browser smoke, no markdown mutation</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Design System</h3>
+  <p>Technical Swiss dashboard: Fira Sans + Fira Code, slate/ink surfaces, blue/green accents only for actions and graph health, visible focus states, reduced-motion support, no emoji icons, graph always paired with an accessible list/table view.</p>
+</div>

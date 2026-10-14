@@ -1,0 +1,313 @@
+- generic [ref=e2]:
+  - link "Skip to main content" [ref=e3] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: w
+        - generic [ref=e8]: llm-wiki
+        - generic [ref=e9]: · ~/AI_V2/team_memory_wiki
+      - button "Open search palette (Cmd+K)" [ref=e10]:
+        - img [ref=e11]
+        - generic [ref=e14]: Search pages, entities, proposals…
+        - generic [ref=e15]: ⌘K
+      - generic [ref=e16]:
+        - generic [ref=e17]: "graph: fresh · 05-09"
+        - generic [ref=e19]: 0 pending
+        - generic [ref=e21]: "mcp: ready · stdio"
+        - button "new project" [ref=e23]:
+          - img [ref=e24]
+          - text: new project
+    - navigation "Workspace" [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]: Workspace
+        - link "Overview" [ref=e28]:
+          - img [ref=e29]
+          - generic [ref=e34]: Overview
+        - link "Pages" [ref=e35]:
+          - img [ref=e36]
+          - generic [ref=e39]: Pages
+        - link "Entities" [ref=e40]:
+          - img [ref=e41]
+          - generic [ref=e44]: Entities
+        - link "Proposed Links 0" [ref=e45]:
+          - img [ref=e46]
+          - generic [ref=e48]: Proposed Links
+          - generic [ref=e49]: "0"
+        - link "Graph" [ref=e50]:
+          - img [ref=e51]
+          - generic [ref=e53]: Graph
+        - link "Reports" [ref=e54]:
+          - img [ref=e55]
+          - generic [ref=e57]: Reports
+        - link "Health" [ref=e58]:
+          - img [ref=e59]
+          - generic [ref=e61]: Health
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - text: Projects
+          - generic [ref=e64]: "4"
+        - link "Porter Community AI Plugins 1" [ref=e65]:
+          - generic [ref=e67]: Porter Community AI Plugins
+          - generic [ref=e68]: "1"
+        - link "PTL Batching Engine - Observability Tools 1" [ref=e69]:
+          - generic [ref=e71]: PTL Batching Engine - Observability Tools
+          - generic [ref=e72]: "1"
+        - 'link "Analytics Data Outcomes: Onboarding 2.0 (R1–R12) 1" [ref=e73]':
+          - generic [ref=e75]: "Analytics Data Outcomes: Onboarding 2.0 (R1–R12)"
+          - generic [ref=e76]: "1"
+        - link "ViData 1" [ref=e77]:
+          - generic [ref=e79]: ViData
+          - generic [ref=e80]: "1"
+        - generic [ref=e82]: Show all…
+      - generic [ref=e83]:
+        - generic [ref=e84]: Entity Type
+        - generic [ref=e85]:
+          - checkbox "projects 4" [checked] [ref=e86]
+          - generic [ref=e88]: projects
+          - generic [ref=e89]: "4"
+        - generic [ref=e90]:
+          - checkbox "persons 0" [checked] [ref=e91]
+          - generic [ref=e93]: persons
+          - generic [ref=e94]: "0"
+        - generic [ref=e95]:
+          - checkbox "concepts 0" [checked] [ref=e96]
+          - generic [ref=e98]: concepts
+          - generic [ref=e99]: "0"
+      - generic [ref=e100]:
+        - generic [ref=e101]: Edge Type
+        - generic [ref=e102]:
+          - checkbox "links_to" [checked] [ref=e103]
+          - generic [ref=e105]: links_to
+        - generic [ref=e106]:
+          - checkbox "mentions" [checked] [ref=e107]
+          - generic [ref=e109]: mentions
+        - generic [ref=e110]:
+          - checkbox "belongs_to" [checked] [ref=e111]
+          - generic [ref=e113]: belongs_to
+    - main [ref=e114]:
+      - generic [ref=e115]:
+        - generic [ref=e116]:
+          - generic [ref=e117]: ~/AI_V2/team_memory_wiki · phase-3 · graph
+          - heading "Workspace" [level=1] [ref=e118]
+          - generic [ref=e119]: Local read-only browser over the durable wiki graph. Search, inspect backlinks, review proposed cross-links — never mutates markdown.
+        - generic [ref=e120]:
+          - button "rebuild" [active] [ref=e121]:
+            - img [ref=e122]
+            - text: rebuild
+          - button "new project" [ref=e127]:
+            - img [ref=e128]
+            - text: new project
+          - button "open graph" [ref=e129]:
+            - img [ref=e130]
+            - text: open graph
+      - generic [ref=e132]:
+        - generic [ref=e133]:
+          - generic [ref=e134]: Pages
+          - generic [ref=e135]: "15"
+          - generic [ref=e136]:
+            - generic [ref=e137]: ▲
+            - text: +3 today
+          - img [ref=e138]
+        - generic [ref=e140]:
+          - generic [ref=e141]: Entities
+          - generic [ref=e142]: "4"
+          - generic [ref=e143]:
+            - generic [ref=e144]: ▲
+            - text: +5 this week
+          - img [ref=e145]
+        - generic [ref=e147]:
+          - generic [ref=e148]: Edges
+          - generic [ref=e149]: "10"
+          - generic [ref=e150]:
+            - generic [ref=e151]: ▲
+            - text: +22 this week
+          - img [ref=e152]
+        - generic [ref=e154]:
+          - generic [ref=e155]: Pending Links
+          - generic [ref=e156]: "0"
+          - generic [ref=e157]:
+            - generic [ref=e158]: →
+            - text: 4 new
+          - img [ref=e159]
+      - generic [ref=e161]:
+        - generic [ref=e162]:
+          - generic [ref=e163]:
+            - heading "Projects" [level=2] [ref=e164]
+            - generic [ref=e165]: 4 · sorted by last update
+          - generic [ref=e166]:
+            - generic [ref=e167]:
+              - generic: Project
+              - generic: Owner
+              - generic [ref=e168]: Phase
+              - generic [ref=e169]: Pages
+              - generic [ref=e170]: Updated
+            - generic [ref=e171]:
+              - generic:
+                - generic: Porter Community AI Plugins
+                - generic [ref=e173]: ai-marketplace-community
+              - generic: Porter Community Maintainers
+              - generic [ref=e175]: active
+              - generic [ref=e176]: "1"
+              - generic [ref=e177]: 04-25
+            - generic [ref=e178]:
+              - generic:
+                - generic: PTL Batching Engine - Observability Tools
+                - generic [ref=e180]: observability
+              - generic: PTL Ops Analytics
+              - generic [ref=e182]: active
+              - generic [ref=e183]: "1"
+              - generic [ref=e184]: 04-25
+            - generic [ref=e185]:
+              - generic:
+                - generic: "Analytics Data Outcomes: Onboarding 2.0 (R1–R12)"
+                - generic [ref=e187]: onboarding-charter
+              - generic: Data Lead - Onboarding
+              - generic [ref=e189]: active
+              - generic [ref=e190]: "1"
+              - generic [ref=e191]: 04-19
+            - generic [ref=e192]:
+              - generic:
+                - generic: ViData
+                - generic [ref=e194]: vidata
+              - generic: Porter Data Platform Tooling
+              - generic [ref=e196]: active
+              - generic [ref=e197]: "1"
+              - generic [ref=e198]: 04-19
+          - generic [ref=e199]: Showing 8 of 4 · click a row to inspect
+        - generic [ref=e200]:
+          - generic [ref=e201]:
+            - heading "Recent Activity" [level=2] [ref=e202]
+            - generic [ref=e203]: last 24h
+          - generic [ref=e204]:
+            - generic [ref=e205]:
+              - generic [ref=e206]: 2026-05-09
+              - generic [ref=e207]: "Updated: Slot Block Recommendation Model 2.0"
+            - generic [ref=e208]:
+              - generic [ref=e209]: 2026-05-09
+              - generic [ref=e210]: "Updated: MBR Brain"
+            - generic [ref=e211]:
+              - generic [ref=e212]: 2026-05-09
+              - generic [ref=e213]: "Updated: Image Knowledge Graph"
+            - generic [ref=e214]:
+              - generic [ref=e215]: 2026-05-09
+              - generic [ref=e216]: "Updated: Data Catalog MCP PoC"
+            - generic [ref=e217]:
+              - generic [ref=e218]: 2026-05-09
+              - generic [ref=e219]: "Updated: Notion to Markdown Sync Tool"
+            - generic [ref=e220]:
+              - generic [ref=e221]: 2026-05-09
+              - generic [ref=e222]: "Updated: Spot Orders on Tray (HCV)"
+            - generic [ref=e223]:
+              - generic [ref=e224]: 2026-04-29
+              - generic [ref=e225]: "Updated: Needs Review"
+            - generic [ref=e226]:
+              - generic [ref=e227]: 2026-04-29
+              - generic [ref=e228]: "Updated: Projects By Domain"
+            - generic [ref=e229]:
+              - generic [ref=e230]: 2026-04-29
+              - generic [ref=e231]: "Updated: Project Index"
+            - generic [ref=e232]:
+              - generic [ref=e233]: 2026-04-29
+              - generic [ref=e234]: "Updated: Project Index"
+      - generic [ref=e235]:
+        - generic [ref=e236]:
+          - generic [ref=e237]:
+            - heading "Top Entities" [level=2] [ref=e238]
+            - generic [ref=e239]: by backlinks
+          - generic [ref=e240]:
+            - generic [ref=e241]:
+              - generic [ref=e242]: p
+              - generic [ref=e243]: Porter Community AI Plugins
+              - generic [ref=e244]: 0 bl
+              - generic [ref=e245]: 3 a
+            - generic [ref=e246]:
+              - generic [ref=e247]: p
+              - generic [ref=e248]: PTL Batching Engine - Observability Tools
+              - generic [ref=e249]: 0 bl
+              - generic [ref=e250]: 3 a
+            - generic [ref=e251]:
+              - generic [ref=e252]: p
+              - generic [ref=e253]: "Analytics Data Outcomes: Onboarding 2.0 (R1–R12)"
+              - generic [ref=e254]: 0 bl
+              - generic [ref=e255]: 3 a
+            - generic [ref=e256]:
+              - generic [ref=e257]: p
+              - generic [ref=e258]: ViData
+              - generic [ref=e259]: 0 bl
+              - generic [ref=e260]: 3 a
+        - generic [ref=e262]:
+          - heading "High-Confidence Proposals" [level=2] [ref=e263]
+          - generic [ref=e264]: ≥ 0.94
+    - complementary "Context" [ref=e265]:
+      - generic [ref=e266]:
+        - generic [ref=e267]: project
+        - heading "Porter Community AI Plugins" [level=2] [ref=e268]
+        - generic [ref=e269]:
+          - term [ref=e270]: Aliases
+          - definition [ref=e271]: Porter Community AI Plugins, ai-marketplace-community, porter community ai plugins
+          - term [ref=e272]: Backlinks
+          - definition [ref=e273]: "1"
+          - term [ref=e274]: Outbound
+          - definition [ref=e275]: "0"
+      - generic [ref=e276]:
+        - generic [ref=e277]:
+          - heading "Backlinks" [level=3] [ref=e278]
+          - generic [ref=e279]: "1"
+        - generic [ref=e281]:
+          - img [ref=e282]
+          - generic [ref=e285]: Porter Community AI Plugins
+          - generic [ref=e286]: belongs_to_project
+      - generic [ref=e287]:
+        - heading "Actions" [level=3] [ref=e289]
+        - generic [ref=e290]:
+          - generic [ref=e291]:
+            - img [ref=e292]
+            - generic [ref=e295]: Open page
+          - generic [ref=e296]:
+            - img [ref=e297]
+            - generic [ref=e301]: Copy MCP URI
+            - generic [ref=e302]: wiki://project:ai-marketplace-community
+          - generic [ref=e303]:
+            - img [ref=e304]
+            - generic [ref=e308]: View citations
+  - dialog "Rebuild graph" [ref=e309]:
+    - generic [ref=e310]:
+      - generic [ref=e311]:
+        - generic [ref=e312]:
+          - heading "Rebuild graph" [level=2] [ref=e313]
+          - paragraph [ref=e314]: Re-derives state/index.db from current markdown. Read-only against the wiki — no markdown is mutated.
+        - button "Close" [ref=e315]: ×
+      - generic [ref=e316]:
+        - list [ref=e317]:
+          - listitem [ref=e318]:
+            - img [ref=e320]
+            - generic [ref=e322]: Scanning durable pages
+            - generic [ref=e323]: walking wiki/**/*.md
+          - listitem [ref=e324]:
+            - img [ref=e326]
+            - generic [ref=e328]: Parsing frontmatter & headings
+            - generic [ref=e329]: pyyaml · markdown-it
+          - listitem [ref=e330]:
+            - img [ref=e332]
+            - generic [ref=e334]: Resolving entity aliases
+            - generic [ref=e335]: entity_aliases · candidates
+          - listitem [ref=e336]:
+            - img [ref=e338]
+            - generic [ref=e340]: Materialising edges
+            - generic [ref=e341]: links_to · mentions · belongs_to_project
+          - listitem [ref=e342]:
+            - img [ref=e344]
+            - generic [ref=e346]: Generating link proposals
+            - generic [ref=e347]: rule-based + cosine threshold 0.88
+          - listitem [ref=e348]:
+            - img [ref=e350]
+            - generic [ref=e352]: Writing state/index.db
+            - generic [ref=e353]: transaction commit · 0 markdown writes
+        - generic [ref=e354]:
+          - img [ref=e355]
+          - text: 15 pages · 0 edges · 0 proposals · 1720ms · 0 markdown writes
+      - generic [ref=e357]:
+        - generic [ref=e358]: run graph_a6c6 · workspace ~/AI_V2/team_memory_wiki
+        - button "Close" [ref=e359]
+  - status

@@ -1,0 +1,44 @@
+<h2>Phase 3: Read-Only Graph + Proposed Edits Queue</h2>
+<p class="subtitle">A first slice that makes the wiki browseable and agent-queryable without letting automation rewrite markdown directly.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Proposed System Shape</div>
+  <div class="mockup-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:stretch">
+      <div class="placeholder">
+        <strong>Markdown Wiki</strong><br>
+        project cards<br>
+        overview/decisions/reports<br>
+        raw snapshots
+      </div>
+      <div class="placeholder">
+        <strong>Graph Builder</strong><br>
+        entity extraction<br>
+        entity resolution<br>
+        backlinks<br>
+        proposed links
+      </div>
+      <div class="placeholder">
+        <strong>Human + Agent Surfaces</strong><br>
+        local frontend<br>
+        MCP server<br>
+        proposed edits queue
+      </div>
+    </div>
+    <div style="margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="placeholder">
+        <strong>Read-only graph</strong><br>
+        pages, entities, concepts, projects, claims, sources
+      </div>
+      <div class="placeholder">
+        <strong>Approval path</strong><br>
+        cross-link suggestions become reviewable patch proposals
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Design Principle</h3>
+  <p>Automation can discover relationships and propose markdown edits, but only humans approve durable wiki changes in this first Phase 3 slice.</p>
+</div>
